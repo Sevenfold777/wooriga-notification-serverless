@@ -1,11 +1,18 @@
-import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
+import { Context, APIGatewayProxyResult, SQSEvent } from "aws-lambda";
+import { NotificationHandler } from "src/handlers/notification.handler";
 
 export const handler = async (
-  event: APIGatewayEvent,
+  event: SQSEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+  const notifList = event.Records.map((record) => JSON.parse(record.body));
+
+  const notificationHandler = new NotificationHandler();
+
+  for (const notif of notifList) {
+    notificationHandler.handleNotification(notif);
+  }
+
   return {
     statusCode: 200,
     body: JSON.stringify({
