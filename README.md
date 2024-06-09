@@ -22,11 +22,11 @@
 ### Lambda 함수 생성
 
 ```
-aws lambda create-function --function-name ${함수명} --runtime "nodejs20.x" --role ${실행 역할 ARN} --zip-file "fileb://dist/index.zip" --handler index.handler
+aws lambda create-function --function-name ${함수명} --runtime "nodejs20.x" --role ${실행 역할 ARN} --zip-file ${zip파일경로} --handler index.handler
 ```
 
 ### Lambda 함수 업데이트
 
 ```
-TO BE DONE
+aws lambda update-function-code --function-name ${함수명} --zip-file ${zip파일경로}
 ```

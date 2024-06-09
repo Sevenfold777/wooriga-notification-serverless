@@ -1,5 +1,4 @@
 import { FirebaseAdmin } from "../utils/firebase-admin";
-import * as serviceAccount from "../../wooriga-firebase-adminsdk.json";
 import { MessageHandler } from "./message.handler";
 import { DailyEmotionHandler } from "./daily-emotion.handler";
 import { FamilyPediaHandler } from "./family-pedia.handler";
@@ -17,7 +16,7 @@ export class NotificationHandler {
   private pediaHandler: FamilyPediaHandler;
 
   constructor() {
-    this.firebaseAdmin = new FirebaseAdmin(serviceAccount);
+    this.firebaseAdmin = new FirebaseAdmin();
 
     this.messageHandler = new MessageHandler(this.firebaseAdmin);
     this.photoHandler = new PhotoHandler(this.firebaseAdmin);
