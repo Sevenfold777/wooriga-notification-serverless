@@ -1,4 +1,5 @@
 import { NotificationType } from "src/constants/notification-type";
+import { TemplateReturnType } from "./common";
 
 export const PhotoNotifParamType = {
   [NotificationType.PHOTO_CREATE]: photoCreateTemplate,
@@ -6,14 +7,26 @@ export const PhotoNotifParamType = {
   [NotificationType.COMMENT_PHOTO]: commentPhotoTemplate,
 };
 
-function photoCreateTemplate() {
-  return ``;
+function photoCreateTemplate(userName: string): TemplateReturnType {
+  return {
+    title: `우리가 앨범`,
+    body: `${userName} 님이 새로운 사진을 앨범에 등록했습니다!`,
+  };
 }
 
-function photoUploadedTemplate() {
-  return ``;
+function photoUploadedTemplate(): TemplateReturnType {
+  return { title: `우리가 앨범`, body: `사진 업로드가 완료되었습니다!` };
 }
 
-function commentPhotoTemplate() {
-  return ``;
+function commentPhotoTemplate(
+  userName: string,
+  payload: string
+): TemplateReturnType {
+  const commentPreview =
+    payload.length > 10 ? payload.slice(0, 10) + "..." : payload;
+
+  return {
+    title: `우리가 앨범`,
+    body: `${userName} 님이 사진에 댓글을 작성했습니다! "${commentPreview}"`,
+  };
 }

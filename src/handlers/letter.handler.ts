@@ -4,14 +4,9 @@ import {
   TimeCapsulesOpenedParam,
 } from "src/constants/letter-notification";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
-import { FirebaseAdmin } from "src/utils/firebase-admin";
 
 export class LetterHandler {
-  private firebaseAdmin: FirebaseAdmin;
-
-  constructor(firebaseAdmin: FirebaseAdmin) {
-    this.firebaseAdmin = firebaseAdmin;
-  }
+  constructor() {}
 
   @CustomValidate(LetterSendParam)
   letterSend({}: LetterSendParam) {}

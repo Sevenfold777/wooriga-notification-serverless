@@ -4,14 +4,9 @@ import {
   PhotoUploadedParam,
 } from "src/constants/photo-notification";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
-import { FirebaseAdmin } from "src/utils/firebase-admin";
 
 export class PhotoHandler {
-  private firebaseAdmin: FirebaseAdmin;
-
-  constructor(firebaseAdmin: FirebaseAdmin) {
-    this.firebaseAdmin = firebaseAdmin;
-  }
+  constructor() {}
 
   @CustomValidate(PhotoCreateParam)
   photoCreate({}: PhotoCreateParam) {}
