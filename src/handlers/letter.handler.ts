@@ -4,16 +4,21 @@ import {
   TimeCapsulesOpenedParam,
 } from "src/constants/letter-notification";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
+import { DynamoDBService } from "src/utils/dynamodb.service";
 
 export class LetterHandler {
-  constructor() {}
+  private dynamodbService: DynamoDBService;
+
+  constructor(dynamodbService: DynamoDBService) {
+    this.dynamodbService = dynamodbService;
+  }
 
   @CustomValidate(LetterSendParam)
-  letterSend({}: LetterSendParam) {}
+  async letterSend({}: LetterSendParam) {}
 
   @CustomValidate(TimeCapsulesOpenedParam)
-  timeCapsuleOpened({}: TimeCapsulesOpenedParam) {}
+  async timeCapsuleOpened({}: TimeCapsulesOpenedParam) {}
 
   @CustomValidate(NotifyBirthdayParam)
-  notifyBirthDay({}: NotifyBirthdayParam) {}
+  async notifyBirthDay({}: NotifyBirthdayParam) {}
 }

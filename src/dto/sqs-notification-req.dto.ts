@@ -7,6 +7,4 @@ export class SqsNotificationReqDTO<T extends NotificationType> {
   type: T;
 
   param: NotificationParamType[T];
-
-  save: boolean;
 }

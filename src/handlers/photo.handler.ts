@@ -4,16 +4,21 @@ import {
   PhotoUploadedParam,
 } from "src/constants/photo-notification";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
+import { DynamoDBService } from "src/utils/dynamodb.service";
 
 export class PhotoHandler {
-  constructor() {}
+  private dynamodbService: DynamoDBService;
+
+  constructor(dynamodbService: DynamoDBService) {
+    this.dynamodbService = dynamodbService;
+  }
 
   @CustomValidate(PhotoCreateParam)
-  photoCreate({}: PhotoCreateParam) {}
+  async photoCreate({}: PhotoCreateParam) {}
 
   @CustomValidate(PhotoUploadedParam)
-  PhotoUploadedParam({}: PhotoUploadedParam) {}
+  async photoUploaded({}: PhotoUploadedParam) {}
 
   @CustomValidate(CommentPhotoParam)
-  commentPhoto({}: CommentPhotoParam) {}
+  async commentPhoto({}: CommentPhotoParam) {}
 }

@@ -4,16 +4,21 @@ import {
   MessageTodayParam,
 } from "src/constants/message-notification";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
+import { DynamoDBService } from "src/utils/dynamodb.service";
 
 export class MessageHandler {
-  constructor() {}
+  private dynamodbService: DynamoDBService;
+
+  constructor(dynamodbService: DynamoDBService) {
+    this.dynamodbService = dynamodbService;
+  }
 
   @CustomValidate(MessageTodayParam)
-  messageToday({}: MessageTodayParam) {}
+  async messageToday({ familyIds }: MessageTodayParam) {}
 
   @CustomValidate(MessageBirthdayParam)
-  messageBirthday({}: MessageBirthdayParam) {}
+  async messageBirthday({ familyIds }: MessageBirthdayParam) {}
 
   @CustomValidate(CommentMessageParam)
-  commentMessage({}: CommentMessageParam) {}
+  async commentMessage({ messageFamId, familyId }: CommentMessageParam) {}
 }
