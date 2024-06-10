@@ -10,10 +10,16 @@ export type FamilyPediaNotifParamType = {
 
 export class PediaQuestionCreatedParam {
   @IsNumber()
+  familyId: number;
+
+  @IsNumber()
   ownerId: number;
 }
 
 export class PediaQuestionEdittedParam {
+  @IsNumber()
+  familyId: number;
+
   @IsNumber()
   ownerId: number;
 }
@@ -21,9 +27,15 @@ export class PediaQuestionEdittedParam {
 export class PediaAnswerParam {
   @IsNumber()
   familyId: number;
+
+  @IsNumber()
+  ownerId: number;
 }
 
 export class PediaEditPhotoParam {
   @IsNumber()
   familyId: number;
+
+  @IsNumber()
+  ownerId: number;
 }

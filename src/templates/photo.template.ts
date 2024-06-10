@@ -1,16 +1,19 @@
 import { NotificationType } from "src/constants/notification-type";
 import { TemplateReturnType } from "./common";
 
-export const PhotoNotifParamType = {
+export const PhotoNotifTemplates = {
   [NotificationType.PHOTO_CREATE]: photoCreateTemplate,
   [NotificationType.PHOTO_UPLOADED]: photoUploadedTemplate,
   [NotificationType.COMMENT_PHOTO]: commentPhotoTemplate,
 };
 
-function photoCreateTemplate(userName: string): TemplateReturnType {
+function photoCreateTemplate(
+  userName: string,
+  titlePreview: string
+): TemplateReturnType {
   return {
     title: `우리가 앨범`,
-    body: `${userName} 님이 새로운 사진을 앨범에 등록했습니다!`,
+    body: `${userName} 님이 앨범에 새로운 사진을 등록했습니다! "${titlePreview}"`,
   };
 }
 

@@ -32,6 +32,6 @@ function pediaAnswerTemplate(userName: string): TemplateReturnType {
 function pediaEditPhotoTemplate(userName: string): TemplateReturnType {
   return {
     title: `우리가 인물사전`,
-    body: `${userName} 님의 인물사전이 수정되었습니다!`,
+    body: `${userName} 님의 인물사전 사진이 변경되었습니다!`,
   };
 }

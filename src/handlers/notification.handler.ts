@@ -1,3 +1,4 @@
+import { RedisFamilyMemberService } from "./../utils/redis/redis-family-member.service";
 import { MessageHandler } from "./message.handler";
 import { DailyEmotionHandler } from "./daily-emotion.handler";
 import { FamilyPediaHandler } from "./family-pedia.handler";
@@ -5,7 +6,6 @@ import { LetterHandler } from "./letter.handler";
 import { PhotoHandler } from "./photo.handler";
 import { SqsNotificationReqDTO } from "src/dto/sqs-notification-req.dto";
 import { NotificationType } from "src/constants/notification-type";
-import { DynamoDBService } from "src/utils/dynamodb.service";
 import {
   CommentMessageParam,
   MessageBirthdayParam,
@@ -40,13 +40,13 @@ export class NotificationHandler {
   private pediaHandler: FamilyPediaHandler;
 
   constructor() {
-    const dynamodbService = new DynamoDBService();
+    const redisFamilyMemberService = new RedisFamilyMemberService();
 
-    this.messageHandler = new MessageHandler(dynamodbService);
-    this.photoHandler = new PhotoHandler(dynamodbService);
-    this.letterHandler = new LetterHandler(dynamodbService);
-    this.emotionHandler = new DailyEmotionHandler(dynamodbService);
-    this.pediaHandler = new FamilyPediaHandler(dynamodbService);
+    this.messageHandler = new MessageHandler(redisFamilyMemberService);
+    this.photoHandler = new PhotoHandler(redisFamilyMemberService);
+    this.letterHandler = new LetterHandler(redisFamilyMemberService);
+    this.emotionHandler = new DailyEmotionHandler(redisFamilyMemberService);
+    this.pediaHandler = new FamilyPediaHandler(redisFamilyMemberService);
   }
 
   async handleNotification({

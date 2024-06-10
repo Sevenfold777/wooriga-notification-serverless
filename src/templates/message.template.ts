@@ -1,7 +1,7 @@
 import { NotificationType } from "src/constants/notification-type";
 import { TemplateReturnType } from "./common";
 
-export const MessageNotifParamType = {
+export const MessageNotifTemplates = {
   [NotificationType.MESSAGE_TODAY]: messageTodayTemplate,
   [NotificationType.MESSAGE_BIRTHDAY]: messageBirthdayTemplate,
   [NotificationType.COMMENT_MESSAGE]: commentMessageTemplate,

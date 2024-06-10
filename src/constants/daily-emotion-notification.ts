@@ -9,9 +9,15 @@ export type DailyEmotionNotifParamType = {
 export class EmotionChosenParam {
   @IsNumber()
   familyId: number;
+
+  @IsNumber()
+  userId: number;
 }
 
 export class EmotionPokeParam {
   @IsNumber()
   userId: number;
+
+  @IsNumber()
+  familyId: number;
 }

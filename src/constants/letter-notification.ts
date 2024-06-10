@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNumber, ValidateNested } from "class-validator";
+import { IsBoolean, IsNumber, ValidateNested } from "class-validator";
 import { NotificationType } from "./notification-type";
 
 export type LetterNotifParamType = {
@@ -11,6 +11,12 @@ export type LetterNotifParamType = {
 export class LetterSendParam {
   @IsNumber()
   letterId: number;
+
+  @IsBoolean()
+  isTimeCapsule: boolean;
+
+  @IsNumber()
+  familyId: number;
 
   @IsNumber()
   receiverId: number;
@@ -45,4 +51,7 @@ class TimeCapsuleParam {
 
   @IsNumber()
   senderId: number;
+
+  @IsNumber()
+  familyId: number;
 }

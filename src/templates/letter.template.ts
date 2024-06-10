@@ -1,7 +1,7 @@
 import { NotificationType } from "src/constants/notification-type";
 import { TemplateReturnType } from "./common";
 
-export const LetterNotifParamType = {
+export const LetterNotifTemplates = {
   [NotificationType.LETTER_SEND]: letterSendTemplate,
   [NotificationType.TIMECAPSULE_OPENED]: {
     receiverTemplate: timeCapsulesOpenedReceiverTemplate,
@@ -41,9 +41,9 @@ function timeCapsulesOpenedSenderTemplate(
   };
 }
 
-function notifyBirthdayTemplate(): TemplateReturnType {
+function notifyBirthdayTemplate(birthdayUserName: string): TemplateReturnType {
   return {
     title: `우리가 생일`,
-    body: `곧 우리가족의 생일이에요! 따뜻한 축하의 편지를 전해보아요`,
+    body: `곧 사랑하는 우리가족 ${birthdayUserName} 님의 생일이에요! 따뜻한 축하의 편지를 전해보아요`,
   };
 }

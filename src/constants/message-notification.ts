@@ -1,4 +1,4 @@
-import { IsNumber } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 import { NotificationType } from "./notification-type";
 
 export type MessageNotifParamType = {
@@ -20,6 +20,13 @@ export class MessageBirthdayParam {
 export class CommentMessageParam {
   @IsNumber()
   messageFamId: number;
+
+  @IsOptional()
+  @IsString()
+  commentPreview: string;
+
+  @IsNumber()
+  authorId: number;
 
   @IsNumber()
   familyId: number;
