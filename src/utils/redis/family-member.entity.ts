@@ -1,11 +1,4 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-} from "class-validator";
-import { UserStatus } from "./user-status.enum";
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class FamilyMember {
   @IsNumber()
@@ -24,22 +17,17 @@ export class FamilyMember {
   @IsBoolean()
   mktPushAgreed: boolean;
 
-  @IsEnum(UserStatus)
-  status: UserStatus;
-
   constructor(
     familyId: number,
     userId: number,
     userName: string,
     fcmToken: string,
-    mktPushAgreed: boolean,
-    status: UserStatus
+    mktPushAgreed: boolean
   ) {
     this.familyId = familyId;
     this.userId = userId;
     this.userName = userName;
     this.fcmToken = fcmToken;
     this.mktPushAgreed = mktPushAgreed;
-    this.status = status;
   }
 }

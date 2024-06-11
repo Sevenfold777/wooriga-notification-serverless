@@ -1,7 +1,6 @@
 import { Redis } from "ioredis";
 import { FamilyMember } from "./family-member.entity";
 import { RedisUserInfoType } from "./redis-user-info.type";
-import { UserStatus } from "./user-status.enum";
 
 export class RedisFamilyMemberService {
   private redis: Redis;
@@ -25,7 +24,7 @@ export class RedisFamilyMemberService {
       const userIds = Object.keys(familyRaw);
 
       for (const userId of userIds) {
-        const { userName, fcmToken, mktPushAreed, status }: RedisUserInfoType =
+        const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
           JSON.parse(familyRaw[userId]);
 
         const member = new FamilyMember(
@@ -33,8 +32,7 @@ export class RedisFamilyMemberService {
           parseInt(userId),
           userName,
           fcmToken,
-          mktPushAreed,
-          UserStatus[status]
+          mktPushAreed
         );
 
         familyMembers.push(member);
@@ -59,7 +57,7 @@ export class RedisFamilyMemberService {
         String(userId)
       );
 
-      const { userName, fcmToken, mktPushAreed, status }: RedisUserInfoType =
+      const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
         JSON.parse(userInfoRaw[userId]);
 
       const member = new FamilyMember(
@@ -67,8 +65,7 @@ export class RedisFamilyMemberService {
         userId,
         userName,
         fcmToken,
-        mktPushAreed,
-        UserStatus[status]
+        mktPushAreed
       );
 
       return member;
@@ -108,20 +105,15 @@ export class RedisFamilyMemberService {
         const userIds = Object.keys(familyRaw);
 
         for (const userId of userIds) {
-          const {
-            userName,
-            fcmToken,
-            mktPushAreed,
-            status,
-          }: RedisUserInfoType = JSON.parse(familyRaw[userId]);
+          const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
+            JSON.parse(familyRaw[userId]);
 
           const user = new FamilyMember(
             familyId,
             parseInt(userId),
             userName,
             fcmToken,
-            mktPushAreed,
-            UserStatus[status]
+            mktPushAreed
           );
 
           usersFound.push(user);
