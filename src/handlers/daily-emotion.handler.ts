@@ -17,10 +17,12 @@ export class DailyEmotionHandler {
 
   @CustomValidate(EmotionChosenParam)
   async emotionChosen({ familyId, userId }: EmotionChosenParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let userChosen: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== userId;
       if (!condition) {
         userChosen = user;
@@ -29,7 +31,6 @@ export class DailyEmotionHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -42,26 +43,28 @@ export class DailyEmotionHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: MESSAGE_HOME,
+      //   TODO: screen: MESSAGE_HOME,
       //   param: {openEmotion: true, userId}
     });
   }
 
   @CustomValidate(EmotionPokeParam)
   async emotionPoke({ familyId, userId }: EmotionPokeParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember;
+    const targetUser = await this.redisFamilyMemberService.getUser(
+      familyId,
+      userId
+    );
 
     // 2. FCM request with info
     const notifPayload = DailyEmotionNotifTemplates.EMOTION_POKE(
-      tempResult.userName
+      targetUser.userName
     );
 
     await sendNotification({
-      tokens: [tempResult.fcmToken],
+      tokens: [targetUser.fcmToken],
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: MESSAGE_HOME,
+      //  TODO: screen: MESSAGE_HOME,
       // param: {openEmotion: true, userId}
     });
   }

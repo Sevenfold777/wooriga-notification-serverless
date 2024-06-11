@@ -1,13 +1,13 @@
-import { RedisClientType, createClient } from "redis";
+import { Redis } from "ioredis";
 import { FamilyMember } from "./family-member.entity";
 import { RedisUserInfoType } from "./redis-user-info.type";
 import { UserStatus } from "./user-status.enum";
 
 export class RedisFamilyMemberService {
-  private client: RedisClientType;
+  private redis: Redis;
 
   constructor() {
-    this.client = createClient();
+    this.redis = new Redis();
   }
 
   /**
@@ -19,7 +19,7 @@ export class RedisFamilyMemberService {
    */
   async getFamily(familyId: number): Promise<FamilyMember[]> {
     try {
-      const familyRaw = await this.client.hGetAll(String(familyId));
+      const familyRaw = await this.redis.hgetall(String(familyId));
 
       const familyMembers: FamilyMember[] = [];
       const userIds = Object.keys(familyRaw);
@@ -54,7 +54,7 @@ export class RedisFamilyMemberService {
    */
   async getUser(familyId: number, userId: number): Promise<FamilyMember> {
     try {
-      const userInfoRaw = await this.client.hGet(
+      const userInfoRaw = await this.redis.hget(
         String(familyId),
         String(userId)
       );
@@ -78,43 +78,57 @@ export class RedisFamilyMemberService {
   }
 
   /**
-   * 소수의 family id list를 입력 받아 여러 family를 반환
-   * 내부적으로는 반복문과 HGETALL을 사용
-   * Promise.allSettled를 사용하여 애플리케이션 수준에서의 병렬처리 노력
-   * (redis가 싱글스레드이기에 큰 차이가 없을 수도 => TODO: 비교 테스트)
+   * family id list를 입력 받아 여러 family를 반환
+   * 내부적으로는 redis Pipeline을 통해 여러 개의 HGETALL을 batch 처리
+   * pipeline을 통해 RTT 최적화 및 redis context switch overhead를 낮추어 성능 향상
    * @param familyIds 찾고자 하는 familyId(redis key)의 집합
    * @usecase messageToday
+   * TODO: 성능 비교 테스트
    */
   async getFamilyMembersByIds(familyIds: number[]): Promise<FamilyMember[]> {
     try {
       const usersFound: FamilyMember[] = [];
 
-      for (const familyId of familyIds) {
-        const familyMembers = await this.getFamily(familyId);
-        usersFound.push(...familyMembers);
+      const pipeline = this.redis.pipeline();
+      familyIds.forEach((familyId) => pipeline.hgetall(String(familyId)));
+
+      const result = await pipeline.exec();
+
+      if (pipeline.length !== familyIds.length) {
+        throw new Error("Missed some request in pipeline.");
       }
 
-      return usersFound;
-    } catch (e) {
-      throw new Error(e.message);
-    }
-  }
+      result.forEach(([err, familyRaw], idx) => {
+        if (err) {
+          console.error(`Redis Error: ${err.name} - ${err.message}`);
+          return;
+        }
 
-  /**
-   * 반환하지 않을 소수의 family id list를 입력 받아 full scan에 가까운 작업
-   * KEYS 대신 SCAN을 사용하여 redis의 싱글스레드가 blocking되는 것을 방지
-   * 사용하는 memory 용량은 500MB이고, 하나의 user entity는 약 300바이트의 크기를 갖기에
-   * 전체 user를 메모리에 올리기에 매우 충분
-   * 150만 이상의 사용자에 대하여 효율적인 TTL 운영으로 처리 가능할 듯 (장기 미사용 유저 등)
-   * 장기적으로는 샤딩 고려
-   * @param exceptFamilyIds 찾고자 하는 familyId(redis key)의 집합
-   * @usecase messageToday
-   */
-  async scanFamilyMembersExceptIds(
-    exceptFamilyIds: number[]
-  ): Promise<FamilyMember[]> {
-    try {
-      return null;
+        const familyId = familyIds[idx];
+        const userIds = Object.keys(familyRaw);
+
+        for (const userId of userIds) {
+          const {
+            userName,
+            fcmToken,
+            mktPushAreed,
+            status,
+          }: RedisUserInfoType = JSON.parse(familyRaw[userId]);
+
+          const user = new FamilyMember(
+            familyId,
+            parseInt(userId),
+            userName,
+            fcmToken,
+            mktPushAreed,
+            UserStatus[status]
+          );
+
+          usersFound.push(user);
+        }
+      });
+
+      return usersFound;
     } catch (e) {
       throw new Error(e.message);
     }

@@ -18,36 +18,34 @@ export class MessageHandler {
 
   @CustomValidate(MessageTodayParam)
   async messageToday({ familyIds }: MessageTodayParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
-
-    // 2. FCM request with info
+    const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
+      familyIds
+    );
 
     const notifPayload = MessageNotifTemplates.MESSAGE_TODAY();
 
     await sendNotification({
-      tokens: tempResult.map((res) => res.fcmToken),
+      tokens: users.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: MESSAGE_HOME,
+      //   TODO: screen: MESSAGE_HOME,
       //   param: {}
     });
   }
 
   @CustomValidate(MessageBirthdayParam)
   async messageBirthday({ familyIds }: MessageBirthdayParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
-
-    // 2. FCM request with info
+    const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
+      familyIds
+    );
 
     const notifPayload = MessageNotifTemplates.MESSAGE_BIRTHDAY();
 
     await sendNotification({
-      tokens: tempResult.map((res) => res.fcmToken),
+      tokens: users.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: MESSAGE_HOME,
+      //   TODO: screen: MESSAGE_HOME,
       //   param: {}
     });
   }
@@ -59,10 +57,12 @@ export class MessageHandler {
     authorId,
     commentPreview,
   }: CommentMessageParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let author: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== authorId;
       if (!condition) {
         author = user;
@@ -71,7 +71,6 @@ export class MessageHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -85,7 +84,7 @@ export class MessageHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: MESSAGE_FAMILY,
+      // TODO: screen: MESSAGE_FAMILY,
       // param: {messageFamId}
     });
 

@@ -19,10 +19,11 @@ export class FamilyPediaHandler {
 
   @CustomValidate(PediaQuestionCreatedParam)
   async pediaQuestionCreated({ familyId, ownerId }: PediaQuestionCreatedParam) {
-    // 1. TODO: get tokens from db
-    let owner: FamilyMember;
+    const owner = await this.redisFamilyMemberService.getUser(
+      familyId,
+      ownerId
+    );
 
-    // 2. FCM request with info
     const notifPayload = FamilyPediaNotifTemplates.PEDIA_QUESTION_CREATED(
       owner.userName
     );
@@ -31,7 +32,7 @@ export class FamilyPediaHandler {
       tokens: [owner.fcmToken],
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: PEDIA,
+      // TODO: screen: PEDIA,
       // param: {pediaId: ownerId}
     });
 
@@ -40,10 +41,11 @@ export class FamilyPediaHandler {
 
   @CustomValidate(PediaQuestionEdittedParam)
   async pediaQuestionEditted({ familyId, ownerId }: PediaQuestionEdittedParam) {
-    // 1. TODO: get tokens from db
-    let owner: FamilyMember;
+    const owner = await this.redisFamilyMemberService.getUser(
+      familyId,
+      ownerId
+    );
 
-    // 2. FCM request with info
     const notifPayload = FamilyPediaNotifTemplates.PEDIA_QUESTION_EDITTED(
       owner.userName
     );
@@ -52,7 +54,7 @@ export class FamilyPediaHandler {
       tokens: [owner.fcmToken],
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: PEDIA,
+      // TODO: screen: PEDIA,
       // param: {pediaId: ownerId}
     });
 
@@ -61,10 +63,12 @@ export class FamilyPediaHandler {
 
   @CustomValidate(PediaAnswerParam)
   async pediaAnswer({ familyId, ownerId }: PediaAnswerParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let owner: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== ownerId;
       if (!condition) {
         owner = user;
@@ -73,7 +77,6 @@ export class FamilyPediaHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -84,7 +87,7 @@ export class FamilyPediaHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: PEDIA,
+      // TODO: screen: PEDIA,
       // param: {pediaId: ownerId}
     });
 
@@ -93,10 +96,12 @@ export class FamilyPediaHandler {
 
   @CustomValidate(PediaEditPhotoParam)
   async pediaEditPhoto({ familyId, ownerId }: PediaEditPhotoParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let owner: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== ownerId;
       if (!condition) {
         owner = user;
@@ -105,7 +110,6 @@ export class FamilyPediaHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -118,7 +122,7 @@ export class FamilyPediaHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: PEDIA,
+      // TODO: screen: PEDIA,
       // param: {pediaId: ownerId}
     });
 

@@ -23,20 +23,21 @@ export class LetterHandler {
     familyId,
     isTimeCapsule,
   }: LetterSendParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember;
+    const receiver = await this.redisFamilyMemberService.getUser(
+      familyId,
+      receiverId
+    );
 
-    // 2. FCM request with info
     const notifPayload = LetterNotifTemplates.LETTER_SEND(
-      tempResult.userName,
+      receiver.userName,
       isTimeCapsule
     );
 
     await sendNotification({
-      tokens: [tempResult.fcmToken],
+      tokens: [receiver.fcmToken],
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: LETTER_SEND,
+      //   TODO: screen: LETTER_SEND,
       //   param: {letterId}
     });
 
@@ -46,14 +47,16 @@ export class LetterHandler {
   @CustomValidate(TimeCapsulesOpenedParam)
   async timeCapsuleOpened({ timaCapsules }: TimeCapsulesOpenedParam) {
     for (const tc of timaCapsules) {
-      // 1. TODO: get tokens from db
       const { receiverId, senderId, letterId, familyId } = tc;
 
-      let tempResult: FamilyMember[];
+      const familyMembers = await this.redisFamilyMemberService.getFamily(
+        familyId
+      );
+
       let receiver: FamilyMember;
       let sender: FamilyMember;
 
-      tempResult.forEach((user) => {
+      familyMembers.forEach((user) => {
         switch (user.userId) {
           case receiverId:
             receiver = user;
@@ -66,7 +69,6 @@ export class LetterHandler {
         }
       });
 
-      // 2. FCM request with info
       const receiverNotifPayload =
         LetterNotifTemplates.TIMECAPSULE_OPENED.receiverTemplate();
       const senderNotifPayload =
@@ -79,14 +81,14 @@ export class LetterHandler {
           tokens: [receiver.fcmToken],
           title: receiverNotifPayload.title,
           body: receiverNotifPayload.body,
-          // screen: LETTER_RECEIVED,
+          // TODO: screen: LETTER_RECEIVED,
           // param: {letterId}
         }),
         sendNotification({
           tokens: [sender.fcmToken],
           title: senderNotifPayload.title,
           body: senderNotifPayload.body,
-          // screen: LETTER_SENT,
+          // TODO: screen: LETTER_SENT,
           // param: {letterId}
         }),
       ]);
@@ -100,10 +102,12 @@ export class LetterHandler {
     for (const familyMemberId of familyIdsWithUserId) {
       const { familyId, birthdayUserId } = familyMemberId;
 
-      // 1. TODO: get tokens from db
-      let tempResult: FamilyMember[];
+      const familyMembers = await this.redisFamilyMemberService.getFamily(
+        familyId
+      );
+
       let birthUser: FamilyMember;
-      const restOfFamily = tempResult.filter((user) => {
+      const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== birthdayUserId;
         if (!condition) {
           birthUser = user;
@@ -112,7 +116,6 @@ export class LetterHandler {
         return condition;
       });
 
-      // 2. FCM request with info
       if (restOfFamily.length === 0) {
         return;
       }
@@ -125,7 +128,7 @@ export class LetterHandler {
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        // screen: LETTER_SEND,
+        // TODO: screen: LETTER_SEND,
         // param: {receiverId: birthUserId}
       });
 

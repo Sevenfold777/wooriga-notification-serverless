@@ -23,10 +23,12 @@ export class PhotoHandler {
     authorId,
     familyId,
   }: PhotoCreateParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let author: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== authorId;
       if (!condition) {
         author = user;
@@ -35,7 +37,6 @@ export class PhotoHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -49,7 +50,7 @@ export class PhotoHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      // screen: PHOTO,
+      //   TODO: screen: PHOTO,
       //   param: {photoId}
     });
 
@@ -68,10 +69,12 @@ export class PhotoHandler {
     authorId,
     commentPreview,
   }: CommentPhotoParam) {
-    // 1. TODO: get tokens from db
-    let tempResult: FamilyMember[];
+    const familyMembers = await this.redisFamilyMemberService.getFamily(
+      familyId
+    );
+
     let author: FamilyMember;
-    const restOfFamily = tempResult.filter((user) => {
+    const restOfFamily = familyMembers.filter((user) => {
       const condition = user.userId !== authorId;
       if (!condition) {
         author = user;
@@ -80,7 +83,6 @@ export class PhotoHandler {
       return condition;
     });
 
-    // 2. FCM request with info
     if (restOfFamily.length === 0) {
       return;
     }
@@ -94,7 +96,7 @@ export class PhotoHandler {
       tokens: restOfFamily.map((res) => res.fcmToken),
       title: notifPayload.title,
       body: notifPayload.body,
-      //   screen: COMMENT_PHOTO,
+      //   TODO: screen: COMMENT_PHOTO,
       //   param: {photoId}
     });
 
