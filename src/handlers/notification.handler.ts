@@ -31,6 +31,7 @@ import {
   PediaQuestionCreatedParam,
   PediaQuestionEdittedParam,
 } from "src/constants/family-pedia-notification";
+import { Redis } from "ioredis";
 
 export class NotificationHandler {
   private messageHandler: MessageHandler;
@@ -39,8 +40,8 @@ export class NotificationHandler {
   private emotionHandler: DailyEmotionHandler;
   private pediaHandler: FamilyPediaHandler;
 
-  constructor() {
-    const redisFamilyMemberService = new RedisFamilyMemberService();
+  constructor(redis: Redis) {
+    const redisFamilyMemberService = new RedisFamilyMemberService(redis);
 
     this.messageHandler = new MessageHandler(redisFamilyMemberService);
     this.photoHandler = new PhotoHandler(redisFamilyMemberService);

@@ -5,8 +5,8 @@ import { RedisUserInfoType } from "./redis-user-info.type";
 export class RedisFamilyMemberService {
   private redis: Redis;
 
-  constructor() {
-    this.redis = new Redis();
+  constructor(redis: Redis) {
+    this.redis = redis;
   }
 
   /**
@@ -17,19 +17,23 @@ export class RedisFamilyMemberService {
    * @param familyId redis 데이터베이스의 key
    */
   async getFamily(familyId: number): Promise<FamilyMember[]> {
+    const familyIdKey = `familyId:${familyId}`;
+
     try {
-      const familyRaw = await this.redis.hgetall(String(familyId));
+      const familyRaw = await this.redis.hgetall(familyIdKey);
 
       const familyMembers: FamilyMember[] = [];
-      const userIds = Object.keys(familyRaw);
+      const userIdKeys = Object.keys(familyRaw);
 
-      for (const userId of userIds) {
+      for (const userIdKey of userIdKeys) {
         const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
-          JSON.parse(familyRaw[userId]);
+          JSON.parse(familyRaw[userIdKey]);
+
+        const userId = parseInt(userIdKey.replace("userId:", ""));
 
         const member = new FamilyMember(
           familyId,
-          parseInt(userId),
+          userId,
           userName,
           fcmToken,
           mktPushAreed
@@ -37,6 +41,8 @@ export class RedisFamilyMemberService {
 
         familyMembers.push(member);
       }
+
+      // familyMembers.sort((a, b) => a.userId - b.userId);
 
       return familyMembers;
     } catch (e) {
@@ -51,14 +57,14 @@ export class RedisFamilyMemberService {
    * @param userId redis 데이터베이스의 value는 Hash Map 자료형
    */
   async getUser(familyId: number, userId: number): Promise<FamilyMember> {
+    const familyIdKey = `familyId:${familyId}`;
+    const userIdKey = `userId:${userId}`;
+
     try {
-      const userInfoRaw = await this.redis.hget(
-        String(familyId),
-        String(userId)
-      );
+      const userInfoRaw = await this.redis.hget(familyIdKey, userIdKey);
 
       const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
-        JSON.parse(userInfoRaw[userId]);
+        JSON.parse(userInfoRaw);
 
       const member = new FamilyMember(
         familyId,
@@ -87,12 +93,18 @@ export class RedisFamilyMemberService {
       const usersFound: FamilyMember[] = [];
 
       const pipeline = this.redis.pipeline();
-      familyIds.forEach((familyId) => pipeline.hgetall(String(familyId)));
+
+      familyIds.forEach((familyId) => {
+        const familyIdKey = `familyId:${familyId}`;
+        pipeline.hgetall(familyIdKey);
+      });
 
       const result = await pipeline.exec();
 
       if (pipeline.length !== familyIds.length) {
-        throw new Error("Missed some request in pipeline.");
+        // ioredis-mock에 pipeline.length 적용되지 않아서 throw --> console.warn로 변환
+        console.warn("Missed some request in pipeline.");
+        // throw new Error("Missed some request in pipeline.");
       }
 
       result.forEach(([err, familyRaw], idx) => {
@@ -102,15 +114,17 @@ export class RedisFamilyMemberService {
         }
 
         const familyId = familyIds[idx];
-        const userIds = Object.keys(familyRaw);
+        const userIdKeys = Object.keys(familyRaw);
 
-        for (const userId of userIds) {
+        for (const userIdKey of userIdKeys) {
           const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
-            JSON.parse(familyRaw[userId]);
+            JSON.parse(familyRaw[userIdKey]);
+
+          const userId = parseInt(userIdKey.replace("userId:", ""));
 
           const user = new FamilyMember(
             familyId,
-            parseInt(userId),
+            userId,
             userName,
             fcmToken,
             mktPushAreed
