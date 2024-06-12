@@ -14,12 +14,11 @@ import {
 import {
   CommentPhotoParam,
   PhotoCreateParam,
-  PhotoUploadedParam,
 } from "src/constants/photo-notification";
 import {
   LetterSendParam,
   NotifyBirthdayParam,
-  TimeCapsulesOpenedParam,
+  TimeCapsulesOpenParam,
 } from "src/constants/letter-notification";
 import {
   EmotionChosenParam,
@@ -32,7 +31,7 @@ import {
   PediaQuestionEdittedParam,
 } from "src/constants/family-pedia-notification";
 import { Redis } from "ioredis";
-import { sendNotification } from "src/utils/fcm/send-notification";
+import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 
 export class NotificationHandler {
   private messageHandler: MessageHandler;
@@ -41,7 +40,10 @@ export class NotificationHandler {
   private emotionHandler: DailyEmotionHandler;
   private pediaHandler: FamilyPediaHandler;
 
-  constructor(redis: Redis) {
+  constructor(
+    redis: Redis,
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+  ) {
     const redisFamilyMemberService = new RedisFamilyMemberService(redis);
 
     this.messageHandler = new MessageHandler(
@@ -97,10 +99,6 @@ export class NotificationHandler {
           await this.photoHandler.photoCreate(param as PhotoCreateParam);
           break;
 
-        case NotificationType.PHOTO_UPLOADED:
-          await this.photoHandler.photoUploaded(param as PhotoUploadedParam);
-          break;
-
         case NotificationType.COMMENT_PHOTO:
           await this.photoHandler.commentPhoto(param as CommentPhotoParam);
           break;
@@ -109,9 +107,9 @@ export class NotificationHandler {
           await this.letterHandler.letterSend(param as LetterSendParam);
           break;
 
-        case NotificationType.TIMECAPSULE_OPENED:
-          await this.letterHandler.timeCapsuleOpened(
-            param as TimeCapsulesOpenedParam
+        case NotificationType.TIMECAPSULE_OPEN:
+          await this.letterHandler.timeCapsuleOpen(
+            param as TimeCapsulesOpenParam
           );
           break;
 
@@ -151,7 +149,7 @@ export class NotificationHandler {
           throw new Error("Type provided. But there's no matching type.");
       }
     } catch (e) {
-      console.error(e.message);
+      console.error(e);
     }
   }
 }

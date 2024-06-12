@@ -9,7 +9,7 @@ const mockSendNotification = jest.fn((args: SendNotifcationParamType) =>
   Promise.resolve(true)
 );
 
-describe("daily emotion handler unit test", () => {
+describe("daily-emotion handler unit test", () => {
   let dailyEmotionHandler: DailyEmotionHandler;
   let mockRedisFamilyMemberService: jest.Mocked<RedisFamilyMemberService>;
 
@@ -23,10 +23,6 @@ describe("daily emotion handler unit test", () => {
       mockSendNotification
     );
   });
-
-  beforeEach(() => {});
-
-  afterAll(() => {});
 
   it("handle emotion chosen", async () => {
     // given

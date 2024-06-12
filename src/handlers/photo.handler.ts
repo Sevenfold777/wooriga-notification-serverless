@@ -1,7 +1,6 @@
 import {
   CommentPhotoParam,
   PhotoCreateParam,
-  PhotoUploadedParam,
 } from "src/constants/photo-notification";
 import { PhotoNotifTemplates } from "src/templates/photo.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
@@ -21,7 +20,7 @@ export class PhotoHandler {
     sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>;
+    this.sendNotification = sendNotification;
   }
 
   @CustomValidate(PhotoCreateParam)
@@ -50,36 +49,39 @@ export class PhotoHandler {
         return;
       }
 
-      const notifPayload = PhotoNotifTemplates.PHOTO_CREATE(
-        author.userName,
-        titlePreview
-      );
+      const authorNotifPayload =
+        PhotoNotifTemplates.PHOTO_CREATE.authorTemplate();
 
-      await this.sendNotification({
-        tokens: restOfFamily.map((res) => res.fcmToken),
-        title: notifPayload.title,
-        body: notifPayload.body,
-        //   TODO: screen: PHOTO,
-        //   param: {photoId}
-      });
+      const othersNotifPayload =
+        PhotoNotifTemplates.PHOTO_CREATE.othersTemplate(
+          author.userName,
+          titlePreview
+        );
+
+      await Promise.all([
+        this.sendNotification({
+          tokens: [author.fcmToken],
+          title: authorNotifPayload.title,
+          body: authorNotifPayload.body,
+          //   TODO: screen: PHOTO,
+          //   param: {photoId}
+        }),
+        this.sendNotification({
+          tokens: restOfFamily.map((res) => res.fcmToken),
+          title: othersNotifPayload.title,
+          body: othersNotifPayload.body,
+          //   TODO: screen: PHOTO,
+          //   param: {photoId}
+        }),
+      ]);
 
       // 3. TODO: handle save notification
 
-      return { result: true, usersNotified: restOfFamily };
+      return { result: true, usersNotified: [author, ...restOfFamily] };
     } catch (error) {
+      console.error(error.message);
       return { result: false };
     }
-  }
-
-  @CustomValidate(PhotoUploadedParam)
-  async photoUploaded({}: PhotoUploadedParam): Promise<HandlerReturnType> {
-    try {
-      return { result: false, usersNotified: [] };
-    } catch (error) {
-      return { result: false };
-    }
-    // TODO: 구현에 따라 생각 (photoCreate에 병합할 수도)
-    // return { result: true, usersNotified: }
   }
 
   @CustomValidate(CommentPhotoParam)
@@ -125,6 +127,7 @@ export class PhotoHandler {
 
       return { result: true, usersNotified: restOfFamily };
     } catch (error) {
+      console.error(error.message);
       return { result: false };
     }
   }

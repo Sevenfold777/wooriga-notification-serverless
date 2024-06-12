@@ -3,9 +3,9 @@ import { TemplateReturnType } from "./common";
 
 export const LetterNotifTemplates = {
   [NotificationType.LETTER_SEND]: letterSendTemplate,
-  [NotificationType.TIMECAPSULE_OPENED]: {
-    receiverTemplate: timeCapsulesOpenedReceiverTemplate,
-    senderTemplate: timeCapsulesOpenedSenderTemplate,
+  [NotificationType.TIMECAPSULE_OPEN]: {
+    receiverTemplate: timeCapsulesOpenReceiverTemplate,
+    senderTemplate: timeCapsulesOpenSenderTemplate,
   },
   [NotificationType.NOTIFY_BIRTHDAY]: notifyBirthdayTemplate,
 };
@@ -25,14 +25,14 @@ function letterSendTemplate(
       };
 }
 
-function timeCapsulesOpenedReceiverTemplate(): TemplateReturnType {
+function timeCapsulesOpenReceiverTemplate(): TemplateReturnType {
   return {
     title: `우리가 편지`,
     body: `기다리고 있던 타임캡슐이 열렸습니다!`,
   };
 }
 
-function timeCapsulesOpenedSenderTemplate(
+function timeCapsulesOpenSenderTemplate(
   receiverName: string
 ): TemplateReturnType {
   return {

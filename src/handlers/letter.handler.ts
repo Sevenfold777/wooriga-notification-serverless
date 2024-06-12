@@ -1,7 +1,7 @@
 import {
   LetterSendParam,
   NotifyBirthdayParam,
-  TimeCapsulesOpenedParam,
+  TimeCapsulesOpenParam,
 } from "src/constants/letter-notification";
 import { LetterNotifTemplates } from "src/templates/letter.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
@@ -53,15 +53,18 @@ export class LetterHandler {
       // 3. TODO: handle save notification
       return { result: true, usersNotified: [receiver] };
     } catch (error) {
+      console.error(error.message);
       return { result: false };
     }
   }
 
-  @CustomValidate(TimeCapsulesOpenedParam)
-  async timeCapsuleOpened({
+  @CustomValidate(TimeCapsulesOpenParam)
+  async timeCapsuleOpen({
     timaCapsules,
-  }: TimeCapsulesOpenedParam): Promise<HandlerReturnType> {
+  }: TimeCapsulesOpenParam): Promise<HandlerReturnType> {
     try {
+      const usersNotified: FamilyMember[] = [];
+
       for (const tc of timaCapsules) {
         const { receiverId, senderId, letterId, familyId } = tc;
 
@@ -86,9 +89,9 @@ export class LetterHandler {
         });
 
         const receiverNotifPayload =
-          LetterNotifTemplates.TIMECAPSULE_OPENED.receiverTemplate();
+          LetterNotifTemplates.TIMECAPSULE_OPEN.receiverTemplate();
         const senderNotifPayload =
-          LetterNotifTemplates.TIMECAPSULE_OPENED.senderTemplate(
+          LetterNotifTemplates.TIMECAPSULE_OPEN.senderTemplate(
             receiver.userName
           );
 
@@ -111,8 +114,11 @@ export class LetterHandler {
 
         // 3. TODO: handle save notification
 
-        return { result: true, usersNotified: [receiver, sender] };
+        // for test, 운영 상에는 관여하지 않음
+        usersNotified.push(receiver);
+        usersNotified.push(sender);
       }
+      return { result: true, usersNotified };
     } catch (error) {
       return { result: false };
     }
@@ -120,12 +126,12 @@ export class LetterHandler {
 
   @CustomValidate(NotifyBirthdayParam)
   async notifyBirthDay({
-    familyIdsWithUserId,
+    familyIdsWithBirthdayUserId,
   }: NotifyBirthdayParam): Promise<HandlerReturnType> {
     try {
       const usersNotified: FamilyMember[] = [];
 
-      for (const familyMemberId of familyIdsWithUserId) {
+      for (const familyMemberId of familyIdsWithBirthdayUserId) {
         const { familyId, birthdayUserId } = familyMemberId;
 
         const familyMembers = await this.redisFamilyMemberService.getFamily(

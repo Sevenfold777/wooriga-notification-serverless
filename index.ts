@@ -4,6 +4,7 @@ import { NotificationHandler } from "src/handlers/notification.handler";
 import * as firebaseAdmin from "firebase-admin";
 import * as serviceAccount from "./wooriga-firebase-adminsdk.json";
 import { Redis } from "ioredis";
+import { sendNotification } from "src/utils/fcm/send-notification";
 
 // firebase
 firebaseAdmin.initializeApp({
@@ -19,11 +20,13 @@ export const handler = async (
   const notifList = event.Records.map((record) => JSON.parse(record.body));
 
   const redis = new Redis();
-  const notificationHandler = new NotificationHandler(redis);
+  const notificationHandler = new NotificationHandler(redis, sendNotification);
 
-  for (const notif of notifList) {
-    notificationHandler.handleNotification(notif);
-  }
+  const result = await Promise.allSettled(
+    notifList.map((notif) => notificationHandler.handleNotification(notif))
+  );
+
+  // TODO: handle notifiaction requests on error
 
   await redis.quit();
 
