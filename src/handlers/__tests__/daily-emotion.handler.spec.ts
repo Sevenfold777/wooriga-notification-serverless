@@ -1,10 +1,13 @@
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { DailyEmotionHandler } from "./../daily-emotion.handler";
 import MockRedis from "ioredis-mock";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
+import { mockClient } from "aws-sdk-client-mock";
 
 jest.mock("src/utils/redis/redis-family-member.service");
+
 const mockSendNotification = jest.fn((args: SendNotifcationParamType) =>
   Promise.resolve(true)
 );
@@ -18,9 +21,15 @@ describe("daily-emotion handler unit test", () => {
       new MockRedis()
     ) as jest.Mocked<RedisFamilyMemberService>;
 
+    // mock sqs client
+    const sqsClient = new SQSClient();
+    const mockSQSClient = mockClient(sqsClient);
+    mockSQSClient.on(SendMessageCommand).resolves({});
+
     dailyEmotionHandler = new DailyEmotionHandler(
       mockRedisFamilyMemberService,
-      mockSendNotification
+      mockSendNotification,
+      sqsClient
     );
   });
 

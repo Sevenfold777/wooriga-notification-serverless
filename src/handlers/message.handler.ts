@@ -9,19 +9,26 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
+import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
 
 export class MessageHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
     args: SendNotifcationParamType
   ) => Promise<boolean>;
+  private sqsClient: SQSClient;
+  private readonly AWS_SQS_NOTIFICATION_STORE_URL =
+    process.env.AWS_SQS_NOTIFICATION_STORE_URL;
 
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
+    this.sqsClient = sqsClient;
   }
 
   @CustomValidate(MessageTodayParam)
@@ -35,13 +42,17 @@ export class MessageHandler {
 
       const notifPayload = MessageNotifTemplates.MESSAGE_TODAY();
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: users.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
         //   TODO: screen: MESSAGE_HOME,
         //   param: {}
       });
+
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
 
       return { result: true, usersNotified: users };
     } catch (error) {
@@ -60,13 +71,17 @@ export class MessageHandler {
 
       const notifPayload = MessageNotifTemplates.MESSAGE_BIRTHDAY();
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: users.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
         //   TODO: screen: MESSAGE_HOME,
         //   param: {}
       });
+
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
 
       return { result: true, usersNotified: users };
     } catch (error) {
@@ -105,7 +120,7 @@ export class MessageHandler {
         commentPreview
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
@@ -113,7 +128,22 @@ export class MessageHandler {
         // param: {messageFamId}
       });
 
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
       // 3. TODO: handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        restOfFamily.map((member) => ({
+          receiverId: member.userId,
+          title: notifPayload.title,
+          body: notifPayload.body,
+          // TODO: screen: MESSAGE_FAMILY,
+          // param: {messageFamId}
+        }))
+      );
 
       return { result: true, usersNotified: restOfFamily };
     } catch (error) {

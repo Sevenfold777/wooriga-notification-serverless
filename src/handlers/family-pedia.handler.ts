@@ -10,19 +10,26 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
+import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
 
 export class FamilyPediaHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
     args: SendNotifcationParamType
   ) => Promise<boolean>;
+  private sqsClient: SQSClient;
+  private readonly AWS_SQS_NOTIFICATION_STORE_URL =
+    process.env.AWS_SQS_NOTIFICATION_STORE_URL;
 
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
+    this.sqsClient = sqsClient;
   }
 
   @CustomValidate(PediaQuestionCreatedParam)
@@ -40,7 +47,7 @@ export class FamilyPediaHandler {
         owner.userName
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: [owner.fcmToken],
         title: notifPayload.title,
         body: notifPayload.body,
@@ -48,7 +55,29 @@ export class FamilyPediaHandler {
         // param: {pediaId: ownerId}
       });
 
-      // 3. TODO: handle save notification
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
+      /**
+       * AWARE: sendMessageSQS 전부 알림 저장 요청에 대한 책임이 있기에 await 사용
+       * 그러나 성공, 실패 여부가 알림 핸들링 전체 성패를 결정할 만큼 중대 하지는 않기에
+       * 에러 로깅만 하고 넘어 감
+       */
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        [
+          {
+            receiverId: ownerId,
+            title: notifPayload.title,
+            body: notifPayload.body,
+            // screen: PEDIA,
+            // param: { pediaId: ownerId },
+          },
+        ]
+      );
 
       return { result: true, usersNotified: [owner] };
     } catch (error) {
@@ -71,7 +100,7 @@ export class FamilyPediaHandler {
         owner.userName
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: [owner.fcmToken],
         title: notifPayload.title,
         body: notifPayload.body,
@@ -79,7 +108,24 @@ export class FamilyPediaHandler {
         // param: {pediaId: ownerId}
       });
 
-      // 3. TODO: handle save notification
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        [
+          {
+            receiverId: ownerId,
+            title: notifPayload.title,
+            body: notifPayload.body,
+            // screen: PEDIA,
+            // param: { pediaId: ownerId },
+          },
+        ]
+      );
 
       return { result: true, usersNotified: [owner] };
     } catch (error) {
@@ -115,7 +161,7 @@ export class FamilyPediaHandler {
         owner.userName
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
@@ -123,7 +169,22 @@ export class FamilyPediaHandler {
         // param: {pediaId: ownerId}
       });
 
-      // 3. TODO: handle save notification
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        restOfFamily.map((member) => ({
+          receiverId: member.userId,
+          title: notifPayload.title,
+          body: notifPayload.body,
+          // TODO: screen: PEDIA,
+          // param: {pediaId: ownerId}
+        }))
+      );
 
       return { result: true, usersNotified: restOfFamily };
     } catch (error) {
@@ -159,7 +220,7 @@ export class FamilyPediaHandler {
         owner.userName
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
@@ -167,7 +228,22 @@ export class FamilyPediaHandler {
         // param: {pediaId: ownerId}
       });
 
-      // 3. TODO: handle save notification
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        restOfFamily.map((member) => ({
+          receiverId: member.userId,
+          title: notifPayload.title,
+          body: notifPayload.body,
+          // TODO: screen: PEDIA,
+          // param: {pediaId: ownerId}
+        }))
+      );
 
       return { result: true, usersNotified: restOfFamily };
     } catch (error) {

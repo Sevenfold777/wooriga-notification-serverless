@@ -9,19 +9,26 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
+import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
 
 export class LetterHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
     args: SendNotifcationParamType
   ) => Promise<boolean>;
+  private sqsClient: SQSClient;
+  private readonly AWS_SQS_NOTIFICATION_STORE_URL =
+    process.env.AWS_SQS_NOTIFICATION_STORE_URL;
 
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
+    this.sqsClient = sqsClient;
   }
 
   @CustomValidate(LetterSendParam)
@@ -42,15 +49,33 @@ export class LetterHandler {
         isTimeCapsule
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: [receiver.fcmToken],
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: LETTER_SEND,
+        //   TODO: screen: LETTER_RECEIVED,
         //   param: {letterId}
       });
 
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
       // 3. TODO: handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        [
+          {
+            receiverId: receiverId,
+            title: notifPayload.title,
+            body: notifPayload.body,
+            // TODO: screen: LETTER_RECEIVED,
+            // param: {letterId}
+          },
+        ]
+      );
+
       return { result: true, usersNotified: [receiver] };
     } catch (error) {
       console.error(error.message);
@@ -95,7 +120,7 @@ export class LetterHandler {
             receiver.userName
           );
 
-        await Promise.all([
+        const pushResult = await Promise.all([
           this.sendNotification({
             tokens: [receiver.fcmToken],
             title: receiverNotifPayload.title,
@@ -112,7 +137,35 @@ export class LetterHandler {
           }),
         ]);
 
-        // 3. TODO: handle save notification
+        if (!pushResult[0]) {
+          throw new Error("Push notification send failed.");
+        }
+
+        if (!pushResult[1]) {
+          throw new Error("Push notification send failed.");
+        }
+
+        // 3. handle save notification
+        await sendMessageSQS(
+          this.sqsClient,
+          this.AWS_SQS_NOTIFICATION_STORE_URL,
+          [
+            {
+              receiverId: receiverId,
+              title: receiverNotifPayload.title,
+              body: receiverNotifPayload.body,
+              // TODO: screen: LETTER_RECEIVED,
+              // param: {letterId}
+            },
+            {
+              receiverId: senderId,
+              title: senderNotifPayload.title,
+              body: senderNotifPayload.body,
+              // TODO: screen: LETTER_RECEIVED,
+              // param: {letterId}
+            },
+          ]
+        );
 
         // for test, 운영 상에는 관여하지 않음
         usersNotified.push(receiver);
@@ -130,6 +183,7 @@ export class LetterHandler {
   }: NotifyBirthdayParam): Promise<HandlerReturnType> {
     try {
       const usersNotified: FamilyMember[] = [];
+      const pushNotifReqs: Promise<boolean>[] = [];
 
       for (const familyMemberId of familyIdsWithBirthdayUserId) {
         const { familyId, birthdayUserId } = familyMemberId;
@@ -156,18 +210,27 @@ export class LetterHandler {
           birthUser.userName
         );
 
-        await this.sendNotification({
-          tokens: restOfFamily.map((res) => res.fcmToken),
-          title: notifPayload.title,
-          body: notifPayload.body,
-          // TODO: screen: LETTER_SEND,
-          // param: {receiverId: birthUserId}
-        });
-
-        // 3. TODO: handle save notification
+        pushNotifReqs.push(
+          this.sendNotification({
+            tokens: restOfFamily.map((res) => res.fcmToken),
+            title: notifPayload.title,
+            body: notifPayload.body,
+            // TODO: screen: LETTER_SEND,
+            // param: {receiverId: birthUserId}
+          })
+        );
 
         usersNotified.push(...restOfFamily);
       }
+
+      const results = await Promise.all(pushNotifReqs);
+
+      for (const result of results) {
+        if (!result) {
+          throw new Error("Push notification send failed.");
+        }
+      }
+
       return { result: true, usersNotified };
     } catch (error) {
       return { result: false };

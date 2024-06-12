@@ -5,6 +5,8 @@ import * as firebaseAdmin from "firebase-admin";
 import * as serviceAccount from "./wooriga-firebase-adminsdk.json";
 import { Redis } from "ioredis";
 import { sendNotification } from "src/utils/fcm/send-notification";
+import "dotenv/config";
+import { SQSClient } from "@aws-sdk/client-sqs";
 
 // firebase
 firebaseAdmin.initializeApp({
@@ -19,8 +21,18 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const notifList = event.Records.map((record) => JSON.parse(record.body));
 
-  const redis = new Redis();
-  const notificationHandler = new NotificationHandler(redis, sendNotification);
+  const redis = new Redis({
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT),
+  });
+
+  const sqsClient = new SQSClient();
+
+  const notificationHandler = new NotificationHandler(
+    redis,
+    sendNotification,
+    sqsClient
+  );
 
   const result = await Promise.allSettled(
     notifList.map((notif) => notificationHandler.handleNotification(notif))

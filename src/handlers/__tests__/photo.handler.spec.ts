@@ -4,6 +4,8 @@ import { PhotoHandler } from "../photo.handler";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { sendNotification } from "src/utils/fcm/send-notification";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { mockClient } from "aws-sdk-client-mock";
 
 jest.mock("src/utils/redis/redis-family-member.service");
 
@@ -21,9 +23,15 @@ describe("photo handler unit test", () => {
       Promise.resolve(true)
     );
 
+    // mock sqs client
+    const sqsClient = new SQSClient();
+    const mockSQSClient = mockClient(sqsClient);
+    mockSQSClient.on(SendMessageCommand).resolves({});
+
     photoHandler = new PhotoHandler(
       mockRedisFamilyMemberService,
-      mockSendNotification
+      mockSendNotification,
+      sqsClient
     );
   });
 

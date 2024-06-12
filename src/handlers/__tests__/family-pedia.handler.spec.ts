@@ -3,6 +3,8 @@ import { FamilyPediaHandler } from "../family-pedia.handler";
 import MockRedis from "ioredis-mock";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { mockClient } from "aws-sdk-client-mock";
 
 jest.mock("src/utils/redis/redis-family-member.service");
 
@@ -20,9 +22,15 @@ describe("family-pedia handler unit test", () => {
       Promise.resolve(true)
     );
 
+    // mock sqs client
+    const sqsClient = new SQSClient();
+    const mockSQSClient = mockClient(sqsClient);
+    mockSQSClient.on(SendMessageCommand).resolves({});
+
     familyPediaHandler = new FamilyPediaHandler(
       mockRedisFamilyMemberService,
-      mockSendNotification
+      mockSendNotification,
+      sqsClient
     );
   });
 

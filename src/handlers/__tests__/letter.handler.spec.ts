@@ -7,6 +7,8 @@ import {
   NotifyBirthdayParam,
   TimeCapsulesOpenParam,
 } from "src/constants/letter-notification";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { mockClient } from "aws-sdk-client-mock";
 
 jest.mock("src/utils/redis/redis-family-member.service");
 
@@ -23,9 +25,15 @@ describe("letter handler unit test", () => {
       Promise.resolve(true)
     );
 
+    // mock sqs client
+    const sqsClient = new SQSClient();
+    const mockSQSClient = mockClient(sqsClient);
+    mockSQSClient.on(SendMessageCommand).resolves({});
+
     letterHandler = new LetterHandler(
       mockRedisFamilyMemberService,
-      mockSendNotification
+      mockSendNotification,
+      sqsClient
     );
   });
 

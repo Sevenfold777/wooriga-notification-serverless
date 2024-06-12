@@ -8,19 +8,26 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
+import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
 
 export class PhotoHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
     args: SendNotifcationParamType
   ) => Promise<boolean>;
+  private sqsClient: SQSClient;
+  private readonly AWS_SQS_NOTIFICATION_STORE_URL =
+    process.env.AWS_SQS_NOTIFICATION_STORE_URL;
 
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
+    this.sqsClient = sqsClient;
   }
 
   @CustomValidate(PhotoCreateParam)
@@ -58,7 +65,7 @@ export class PhotoHandler {
           titlePreview
         );
 
-      await Promise.all([
+      const pushResult = await Promise.all([
         this.sendNotification({
           tokens: [author.fcmToken],
           title: authorNotifPayload.title,
@@ -75,7 +82,26 @@ export class PhotoHandler {
         }),
       ]);
 
-      // 3. TODO: handle save notification
+      if (!pushResult[0]) {
+        throw new Error("Push notification send failed.");
+      }
+
+      if (!pushResult[1]) {
+        throw new Error("Push notification send failed.");
+      }
+
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        restOfFamily.map((member) => ({
+          receiverId: member.userId,
+          title: othersNotifPayload.title,
+          body: othersNotifPayload.body,
+          //   TODO: screen: PHOTO,
+          //   param: {photoId}
+        })) // 사진 게시자에게는 푸시 알림만 전송 (저장 X)
+      );
 
       return { result: true, usersNotified: [author, ...restOfFamily] };
     } catch (error) {
@@ -115,15 +141,30 @@ export class PhotoHandler {
         commentPreview
       );
 
-      await this.sendNotification({
+      const pushResult = await this.sendNotification({
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: COMMENT_PHOTO,
+        //   TODO: screen: PHOTO,
         //   param: {photoId}
       });
 
-      // 3. TODO: handle save notification
+      if (!pushResult) {
+        throw new Error("Push notification send failed.");
+      }
+
+      // 3. handle save notification
+      await sendMessageSQS(
+        this.sqsClient,
+        this.AWS_SQS_NOTIFICATION_STORE_URL,
+        restOfFamily.map((member) => ({
+          receiverId: member.userId,
+          title: notifPayload.title,
+          body: notifPayload.body,
+          //   TODO: screen: PHOTO,
+          //   param: {photoId}
+        })) // 사진 게시자에게는 푸시 알림만 전송 (저장 X)
+      );
 
       return { result: true, usersNotified: restOfFamily };
     } catch (error) {

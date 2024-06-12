@@ -7,6 +7,7 @@ import {
   TEST_MEMBERS_EACH_COUNT,
   USER_ID_BASE,
 } from "./config";
+import "dotenv/config";
 
 describe("redis service integration test", () => {
   let redisFamilyMemberService: RedisFamilyMemberService;
@@ -14,7 +15,10 @@ describe("redis service integration test", () => {
 
   beforeAll(async () => {
     // generate test data
-    redis = new Redis();
+    redis = new Redis({
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    });
     redisFamilyMemberService = new RedisFamilyMemberService(redis);
 
     const pipeline = redis.pipeline();

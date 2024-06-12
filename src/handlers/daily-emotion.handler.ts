@@ -8,19 +8,25 @@ import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
 
 export class DailyEmotionHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
     args: SendNotifcationParamType
   ) => Promise<boolean>;
+  private sqsClient: SQSClient; // 지금은 사용 안하지만 장기적으로 사용할 수 있으므로 남겨 둠 (+ handler 간 형식 통일)
+  private readonly AWS_SQS_NOTIFICATION_STORE_URL =
+    process.env.AWS_SQS_NOTIFICATION_STORE_URL;
 
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
+    this.sqsClient = sqsClient;
   }
 
   @CustomValidate(EmotionChosenParam)

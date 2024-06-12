@@ -32,6 +32,7 @@ import {
 } from "src/constants/family-pedia-notification";
 import { Redis } from "ioredis";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
+import { SQSClient } from "@aws-sdk/client-sqs";
 
 export class NotificationHandler {
   private messageHandler: MessageHandler;
@@ -42,29 +43,35 @@ export class NotificationHandler {
 
   constructor(
     redis: Redis,
-    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
+    sqsClient: SQSClient
   ) {
     const redisFamilyMemberService = new RedisFamilyMemberService(redis);
 
     this.messageHandler = new MessageHandler(
       redisFamilyMemberService,
-      sendNotification
+      sendNotification,
+      sqsClient
     );
     this.photoHandler = new PhotoHandler(
       redisFamilyMemberService,
-      sendNotification
+      sendNotification,
+      sqsClient
     );
     this.letterHandler = new LetterHandler(
       redisFamilyMemberService,
-      sendNotification
+      sendNotification,
+      sqsClient
     );
     this.emotionHandler = new DailyEmotionHandler(
       redisFamilyMemberService,
-      sendNotification
+      sendNotification,
+      sqsClient
     );
     this.pediaHandler = new FamilyPediaHandler(
       redisFamilyMemberService,
-      sendNotification
+      sendNotification,
+      sqsClient
     );
   }
 

@@ -3,6 +3,8 @@ import { MessageHandler } from "../message.handler";
 import MockRedis from "ioredis-mock";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { mockClient } from "aws-sdk-client-mock";
 
 jest.mock("src/utils/redis/redis-family-member.service");
 
@@ -19,9 +21,15 @@ describe("message handler unit test", () => {
       Promise.resolve(true)
     );
 
+    // mock sqs client
+    const sqsClient = new SQSClient();
+    const mockSQSClient = mockClient(sqsClient);
+    mockSQSClient.on(SendMessageCommand).resolves({});
+
     messageHandler = new MessageHandler(
       mockRedisFamilyMemberService,
-      mockSendNotification
+      mockSendNotification,
+      sqsClient
     );
   });
 

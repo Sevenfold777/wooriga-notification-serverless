@@ -12,7 +12,8 @@ export async function sendNotification({
     const tokensNotNull = tokens.filter((token) => token);
 
     if (tokensNotNull.length === 0) {
-      throw new Error("No valid token exist.");
+      console.warn("No token to send exist.");
+      return true;
     }
 
     await FCM().sendEachForMulticast({
