@@ -1,4 +1,5 @@
 import { messaging as FCM } from "firebase-admin";
+import { SendNotifcationParamType } from "./send-notification.type";
 
 export async function sendNotification({
   tokens,
@@ -6,7 +7,7 @@ export async function sendNotification({
   body,
   screen,
   param,
-}: SendNotifcationType): Promise<boolean> {
+}: SendNotifcationParamType): Promise<boolean> {
   try {
     const tokensNotNull = tokens.filter((token) => token);
 
@@ -40,11 +41,3 @@ export async function sendNotification({
     return false;
   }
 }
-
-type SendNotifcationType = {
-  tokens: string[];
-  title: string;
-  body: string;
-  screen?: string;
-  param?: string;
-};

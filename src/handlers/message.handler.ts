@@ -6,48 +6,72 @@ import {
 import { MessageNotifTemplates } from "src/templates/message.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { sendNotification } from "src/utils/firebase-admin";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
+import { HandlerReturnType } from "./handler-return.type";
 
 export class MessageHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
+  private sendNotification: (
+    args: SendNotifcationParamType
+  ) => Promise<boolean>;
 
-  constructor(redisFamilyMemberService: RedisFamilyMemberService) {
+  constructor(
+    redisFamilyMemberService: RedisFamilyMemberService,
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+  ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
+    this.sendNotification = sendNotification;
   }
 
   @CustomValidate(MessageTodayParam)
-  async messageToday({ familyIds }: MessageTodayParam) {
-    const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
-      familyIds
-    );
+  async messageToday({
+    familyIds,
+  }: MessageTodayParam): Promise<HandlerReturnType> {
+    try {
+      const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
+        familyIds
+      );
 
-    const notifPayload = MessageNotifTemplates.MESSAGE_TODAY();
+      const notifPayload = MessageNotifTemplates.MESSAGE_TODAY();
 
-    await sendNotification({
-      tokens: users.map((res) => res.fcmToken),
-      title: notifPayload.title,
-      body: notifPayload.body,
-      //   TODO: screen: MESSAGE_HOME,
-      //   param: {}
-    });
+      await this.sendNotification({
+        tokens: users.map((res) => res.fcmToken),
+        title: notifPayload.title,
+        body: notifPayload.body,
+        //   TODO: screen: MESSAGE_HOME,
+        //   param: {}
+      });
+
+      return { result: true, usersNotified: users };
+    } catch (error) {
+      return { result: false };
+    }
   }
 
   @CustomValidate(MessageBirthdayParam)
-  async messageBirthday({ familyIds }: MessageBirthdayParam) {
-    const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
-      familyIds
-    );
+  async messageBirthday({
+    familyIds,
+  }: MessageBirthdayParam): Promise<HandlerReturnType> {
+    try {
+      const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
+        familyIds
+      );
 
-    const notifPayload = MessageNotifTemplates.MESSAGE_BIRTHDAY();
+      const notifPayload = MessageNotifTemplates.MESSAGE_BIRTHDAY();
 
-    await sendNotification({
-      tokens: users.map((res) => res.fcmToken),
-      title: notifPayload.title,
-      body: notifPayload.body,
-      //   TODO: screen: MESSAGE_HOME,
-      //   param: {}
-    });
+      await this.sendNotification({
+        tokens: users.map((res) => res.fcmToken),
+        title: notifPayload.title,
+        body: notifPayload.body,
+        //   TODO: screen: MESSAGE_HOME,
+        //   param: {}
+      });
+
+      return { result: true, usersNotified: users };
+    } catch (error) {
+      return { result: false };
+    }
   }
 
   @CustomValidate(CommentMessageParam)
@@ -56,38 +80,44 @@ export class MessageHandler {
     familyId,
     authorId,
     commentPreview,
-  }: CommentMessageParam) {
-    const familyMembers = await this.redisFamilyMemberService.getFamily(
-      familyId
-    );
+  }: CommentMessageParam): Promise<HandlerReturnType> {
+    try {
+      const familyMembers = await this.redisFamilyMemberService.getFamily(
+        familyId
+      );
 
-    let author: FamilyMember;
-    const restOfFamily = familyMembers.filter((user) => {
-      const condition = user.userId !== authorId;
-      if (!condition) {
-        author = user;
+      let author: FamilyMember;
+      const restOfFamily = familyMembers.filter((user) => {
+        const condition = user.userId !== authorId;
+        if (!condition) {
+          author = user;
+        }
+
+        return condition;
+      });
+
+      if (restOfFamily.length === 0) {
+        return;
       }
 
-      return condition;
-    });
+      const notifPayload = MessageNotifTemplates.COMMENT_MESSAGE(
+        author.userName,
+        commentPreview
+      );
 
-    if (restOfFamily.length === 0) {
-      return;
+      await this.sendNotification({
+        tokens: restOfFamily.map((res) => res.fcmToken),
+        title: notifPayload.title,
+        body: notifPayload.body,
+        // TODO: screen: MESSAGE_FAMILY,
+        // param: {messageFamId}
+      });
+
+      // 3. TODO: handle save notification
+
+      return { result: true, usersNotified: restOfFamily };
+    } catch (error) {
+      return { result: false };
     }
-
-    const notifPayload = MessageNotifTemplates.COMMENT_MESSAGE(
-      author.userName,
-      commentPreview
-    );
-
-    await sendNotification({
-      tokens: restOfFamily.map((res) => res.fcmToken),
-      title: notifPayload.title,
-      body: notifPayload.body,
-      // TODO: screen: MESSAGE_FAMILY,
-      // param: {messageFamId}
-    });
-
-    // 3. TODO: handle save notification
   }
 }

@@ -42,11 +42,9 @@ export class RedisFamilyMemberService {
         familyMembers.push(member);
       }
 
-      // familyMembers.sort((a, b) => a.userId - b.userId);
-
       return familyMembers;
     } catch (e) {
-      throw new Error(e.message);
+      console.error(e.message);
     }
   }
 
@@ -76,7 +74,7 @@ export class RedisFamilyMemberService {
 
       return member;
     } catch (e) {
-      throw new Error(e.message);
+      console.error(e.message);
     }
   }
 
@@ -102,9 +100,8 @@ export class RedisFamilyMemberService {
       const result = await pipeline.exec();
 
       if (pipeline.length !== familyIds.length) {
-        // ioredis-mock에 pipeline.length 적용되지 않아서 throw --> console.warn로 변환
+        // c.f. ioredis-mock에서는 적용되지 않음
         console.warn("Missed some request in pipeline.");
-        // throw new Error("Missed some request in pipeline.");
       }
 
       result.forEach(([err, familyRaw], idx) => {
@@ -136,7 +133,7 @@ export class RedisFamilyMemberService {
 
       return usersFound;
     } catch (e) {
-      throw new Error(e.message);
+      console.error(e.message);
     }
   }
 }

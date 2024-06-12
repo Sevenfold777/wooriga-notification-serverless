@@ -6,14 +6,22 @@ import {
 import { LetterNotifTemplates } from "src/templates/letter.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { sendNotification } from "src/utils/firebase-admin";
 import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
+import { HandlerReturnType } from "./handler-return.type";
 
 export class LetterHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
+  private sendNotification: (
+    args: SendNotifcationParamType
+  ) => Promise<boolean>;
 
-  constructor(redisFamilyMemberService: RedisFamilyMemberService) {
+  constructor(
+    redisFamilyMemberService: RedisFamilyMemberService,
+    sendNotification: (args: SendNotifcationParamType) => Promise<boolean>
+  ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
+    this.sendNotification = sendNotification;
   }
 
   @CustomValidate(LetterSendParam)
@@ -22,117 +30,141 @@ export class LetterHandler {
     receiverId,
     familyId,
     isTimeCapsule,
-  }: LetterSendParam) {
-    const receiver = await this.redisFamilyMemberService.getUser(
-      familyId,
-      receiverId
-    );
+  }: LetterSendParam): Promise<HandlerReturnType> {
+    try {
+      const receiver = await this.redisFamilyMemberService.getUser(
+        familyId,
+        receiverId
+      );
 
-    const notifPayload = LetterNotifTemplates.LETTER_SEND(
-      receiver.userName,
-      isTimeCapsule
-    );
+      const notifPayload = LetterNotifTemplates.LETTER_SEND(
+        receiver.userName,
+        isTimeCapsule
+      );
 
-    await sendNotification({
-      tokens: [receiver.fcmToken],
-      title: notifPayload.title,
-      body: notifPayload.body,
-      //   TODO: screen: LETTER_SEND,
-      //   param: {letterId}
-    });
+      await this.sendNotification({
+        tokens: [receiver.fcmToken],
+        title: notifPayload.title,
+        body: notifPayload.body,
+        //   TODO: screen: LETTER_SEND,
+        //   param: {letterId}
+      });
 
-    // 3. TODO: handle save notification
+      // 3. TODO: handle save notification
+      return { result: true, usersNotified: [receiver] };
+    } catch (error) {
+      return { result: false };
+    }
   }
 
   @CustomValidate(TimeCapsulesOpenedParam)
-  async timeCapsuleOpened({ timaCapsules }: TimeCapsulesOpenedParam) {
-    for (const tc of timaCapsules) {
-      const { receiverId, senderId, letterId, familyId } = tc;
+  async timeCapsuleOpened({
+    timaCapsules,
+  }: TimeCapsulesOpenedParam): Promise<HandlerReturnType> {
+    try {
+      for (const tc of timaCapsules) {
+        const { receiverId, senderId, letterId, familyId } = tc;
 
-      const familyMembers = await this.redisFamilyMemberService.getFamily(
-        familyId
-      );
-
-      let receiver: FamilyMember;
-      let sender: FamilyMember;
-
-      familyMembers.forEach((user) => {
-        switch (user.userId) {
-          case receiverId:
-            receiver = user;
-            break;
-          case senderId:
-            sender = user;
-            break;
-          default:
-            break;
-        }
-      });
-
-      const receiverNotifPayload =
-        LetterNotifTemplates.TIMECAPSULE_OPENED.receiverTemplate();
-      const senderNotifPayload =
-        LetterNotifTemplates.TIMECAPSULE_OPENED.senderTemplate(
-          receiver.userName
+        const familyMembers = await this.redisFamilyMemberService.getFamily(
+          familyId
         );
 
-      await Promise.all([
-        sendNotification({
-          tokens: [receiver.fcmToken],
-          title: receiverNotifPayload.title,
-          body: receiverNotifPayload.body,
-          // TODO: screen: LETTER_RECEIVED,
-          // param: {letterId}
-        }),
-        sendNotification({
-          tokens: [sender.fcmToken],
-          title: senderNotifPayload.title,
-          body: senderNotifPayload.body,
-          // TODO: screen: LETTER_SENT,
-          // param: {letterId}
-        }),
-      ]);
+        let receiver: FamilyMember;
+        let sender: FamilyMember;
 
-      // 3. TODO: handle save notification
+        familyMembers.forEach((user) => {
+          switch (user.userId) {
+            case receiverId:
+              receiver = user;
+              break;
+            case senderId:
+              sender = user;
+              break;
+            default:
+              break;
+          }
+        });
+
+        const receiverNotifPayload =
+          LetterNotifTemplates.TIMECAPSULE_OPENED.receiverTemplate();
+        const senderNotifPayload =
+          LetterNotifTemplates.TIMECAPSULE_OPENED.senderTemplate(
+            receiver.userName
+          );
+
+        await Promise.all([
+          this.sendNotification({
+            tokens: [receiver.fcmToken],
+            title: receiverNotifPayload.title,
+            body: receiverNotifPayload.body,
+            // TODO: screen: LETTER_RECEIVED,
+            // param: {letterId}
+          }),
+          this.sendNotification({
+            tokens: [sender.fcmToken],
+            title: senderNotifPayload.title,
+            body: senderNotifPayload.body,
+            // TODO: screen: LETTER_SENT,
+            // param: {letterId}
+          }),
+        ]);
+
+        // 3. TODO: handle save notification
+
+        return { result: true, usersNotified: [receiver, sender] };
+      }
+    } catch (error) {
+      return { result: false };
     }
   }
 
   @CustomValidate(NotifyBirthdayParam)
-  async notifyBirthDay({ familyIdsWithUserId }: NotifyBirthdayParam) {
-    for (const familyMemberId of familyIdsWithUserId) {
-      const { familyId, birthdayUserId } = familyMemberId;
+  async notifyBirthDay({
+    familyIdsWithUserId,
+  }: NotifyBirthdayParam): Promise<HandlerReturnType> {
+    try {
+      const usersNotified: FamilyMember[] = [];
 
-      const familyMembers = await this.redisFamilyMemberService.getFamily(
-        familyId
-      );
+      for (const familyMemberId of familyIdsWithUserId) {
+        const { familyId, birthdayUserId } = familyMemberId;
 
-      let birthUser: FamilyMember;
-      const restOfFamily = familyMembers.filter((user) => {
-        const condition = user.userId !== birthdayUserId;
-        if (!condition) {
-          birthUser = user;
+        const familyMembers = await this.redisFamilyMemberService.getFamily(
+          familyId
+        );
+
+        let birthUser: FamilyMember;
+        const restOfFamily = familyMembers.filter((user) => {
+          const condition = user.userId !== birthdayUserId;
+          if (!condition) {
+            birthUser = user;
+          }
+
+          return condition;
+        });
+
+        if (restOfFamily.length === 0) {
+          return;
         }
 
-        return condition;
-      });
+        const notifPayload = LetterNotifTemplates.NOTIFY_BIRTHDAY(
+          birthUser.userName
+        );
 
-      if (restOfFamily.length === 0) {
-        return;
+        await this.sendNotification({
+          tokens: restOfFamily.map((res) => res.fcmToken),
+          title: notifPayload.title,
+          body: notifPayload.body,
+          // TODO: screen: LETTER_SEND,
+          // param: {receiverId: birthUserId}
+        });
+
+        // 3. TODO: handle save notification
+
+        usersNotified.push(...restOfFamily);
       }
-
-      const notifPayload = LetterNotifTemplates.NOTIFY_BIRTHDAY(
-        birthUser.userName
-      );
-
-      await sendNotification({
-        tokens: restOfFamily.map((res) => res.fcmToken),
-        title: notifPayload.title,
-        body: notifPayload.body,
-        // TODO: screen: LETTER_SEND,
-        // param: {receiverId: birthUserId}
-      });
-
-      // 3. TODO: handle save notification
+      return { result: true, usersNotified };
+    } catch (error) {
+      return { result: false };
     }
   }
 }

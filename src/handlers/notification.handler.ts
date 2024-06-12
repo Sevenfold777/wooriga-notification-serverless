@@ -32,6 +32,7 @@ import {
   PediaQuestionEdittedParam,
 } from "src/constants/family-pedia-notification";
 import { Redis } from "ioredis";
+import { sendNotification } from "src/utils/fcm/send-notification";
 
 export class NotificationHandler {
   private messageHandler: MessageHandler;
@@ -43,11 +44,26 @@ export class NotificationHandler {
   constructor(redis: Redis) {
     const redisFamilyMemberService = new RedisFamilyMemberService(redis);
 
-    this.messageHandler = new MessageHandler(redisFamilyMemberService);
-    this.photoHandler = new PhotoHandler(redisFamilyMemberService);
-    this.letterHandler = new LetterHandler(redisFamilyMemberService);
-    this.emotionHandler = new DailyEmotionHandler(redisFamilyMemberService);
-    this.pediaHandler = new FamilyPediaHandler(redisFamilyMemberService);
+    this.messageHandler = new MessageHandler(
+      redisFamilyMemberService,
+      sendNotification
+    );
+    this.photoHandler = new PhotoHandler(
+      redisFamilyMemberService,
+      sendNotification
+    );
+    this.letterHandler = new LetterHandler(
+      redisFamilyMemberService,
+      sendNotification
+    );
+    this.emotionHandler = new DailyEmotionHandler(
+      redisFamilyMemberService,
+      sendNotification
+    );
+    this.pediaHandler = new FamilyPediaHandler(
+      redisFamilyMemberService,
+      sendNotification
+    );
   }
 
   async handleNotification({
