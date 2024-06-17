@@ -1,6 +1,10 @@
 import { Redis } from "ioredis";
-import { FamilyMember } from "./family-member.entity";
-import { RedisUserInfoType } from "./redis-user-info.type";
+import { RedisFamilyMember } from "./redis-family-member.entity";
+import {
+  FAMILY_ID_PREFIX,
+  RedisUserInfoType,
+  USER_ID_PREFIX,
+} from "./redis-family-member.type";
 
 export class RedisFamilyMemberService {
   private redis: Redis;
@@ -16,35 +20,34 @@ export class RedisFamilyMemberService {
    * 우리가에서 가족 구성원의 수는 통상적으로 한 자리수로 제한됨 O(1)
    * @param familyId redis 데이터베이스의 key
    */
-  async getFamily(familyId: number): Promise<FamilyMember[]> {
-    const familyIdKey = `familyId:${familyId}`;
+  async getFamily(familyId: number): Promise<RedisFamilyMember[]> {
+    const familyIdKey = FAMILY_ID_PREFIX + String(familyId);
 
     try {
       const familyRaw = await this.redis.hgetall(familyIdKey);
 
-      const familyMembers: FamilyMember[] = [];
+      const familyMembers: RedisFamilyMember[] = [];
       const userIdKeys = Object.keys(familyRaw);
 
       for (const userIdKey of userIdKeys) {
-        const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
+        const { userName, fcmToken, mktPushAgreed }: RedisUserInfoType =
           JSON.parse(familyRaw[userIdKey]);
 
-        const userId = parseInt(userIdKey.replace("userId:", ""));
+        const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ""));
 
-        const member = new FamilyMember(
-          familyId,
-          userId,
-          userName,
-          fcmToken,
-          mktPushAreed
-        );
+        const member = new RedisFamilyMember();
+        member.familyId = familyId;
+        member.userId = userId;
+        member.userName = userName;
+        member.fcmToken = fcmToken;
+        member.mktPushAgreed = mktPushAgreed;
 
         familyMembers.push(member);
       }
 
       return familyMembers;
     } catch (e) {
-      console.error(e.message);
+      console.error(e);
     }
   }
 
@@ -54,27 +57,26 @@ export class RedisFamilyMemberService {
    * @param familyId redis 데이터베이스의 key
    * @param userId redis 데이터베이스의 value는 Hash Map 자료형
    */
-  async getUser(familyId: number, userId: number): Promise<FamilyMember> {
-    const familyIdKey = `familyId:${familyId}`;
-    const userIdKey = `userId:${userId}`;
+  async getUser(familyId: number, userId: number): Promise<RedisFamilyMember> {
+    const familyIdKey = FAMILY_ID_PREFIX + String(familyId);
+    const userIdKey = USER_ID_PREFIX + String(userId);
 
     try {
       const userInfoRaw = await this.redis.hget(familyIdKey, userIdKey);
 
-      const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
+      const { userName, fcmToken, mktPushAgreed }: RedisUserInfoType =
         JSON.parse(userInfoRaw);
 
-      const member = new FamilyMember(
-        familyId,
-        userId,
-        userName,
-        fcmToken,
-        mktPushAreed
-      );
+      const member = new RedisFamilyMember();
+      member.familyId = familyId;
+      member.userId = userId;
+      member.userName = userName;
+      member.fcmToken = fcmToken;
+      member.mktPushAgreed = mktPushAgreed;
 
       return member;
     } catch (e) {
-      console.error(e.message);
+      console.error(e);
     }
   }
 
@@ -86,14 +88,16 @@ export class RedisFamilyMemberService {
    * @usecase messageToday
    * TODO: 성능 비교 테스트
    */
-  async getFamilyMembersByIds(familyIds: number[]): Promise<FamilyMember[]> {
+  async getFamilyMembersByIds(
+    familyIds: number[]
+  ): Promise<RedisFamilyMember[]> {
     try {
-      const usersFound: FamilyMember[] = [];
+      const usersFound: RedisFamilyMember[] = [];
 
       const pipeline = this.redis.pipeline();
 
       familyIds.forEach((familyId) => {
-        const familyIdKey = `familyId:${familyId}`;
+        const familyIdKey = FAMILY_ID_PREFIX + String(familyId);
         pipeline.hgetall(familyIdKey);
       });
 
@@ -114,18 +118,17 @@ export class RedisFamilyMemberService {
         const userIdKeys = Object.keys(familyRaw);
 
         for (const userIdKey of userIdKeys) {
-          const { userName, fcmToken, mktPushAreed }: RedisUserInfoType =
+          const { userName, fcmToken, mktPushAgreed }: RedisUserInfoType =
             JSON.parse(familyRaw[userIdKey]);
 
-          const userId = parseInt(userIdKey.replace("userId:", ""));
+          const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ""));
 
-          const user = new FamilyMember(
-            familyId,
-            userId,
-            userName,
-            fcmToken,
-            mktPushAreed
-          );
+          const user = new RedisFamilyMember();
+          user.familyId = familyId;
+          user.userId = userId;
+          user.userName = userName;
+          user.fcmToken = fcmToken;
+          user.mktPushAgreed = mktPushAgreed;
 
           usersFound.push(user);
         }
@@ -133,7 +136,7 @@ export class RedisFamilyMemberService {
 
       return usersFound;
     } catch (e) {
-      console.error(e.message);
+      console.error(e);
     }
   }
 }

@@ -7,7 +7,7 @@ import {
 import { FamilyPediaNotifTemplates } from "src/templates/family-pedia.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
 import { SQSClient } from "@aws-sdk/client-sqs";
@@ -143,7 +143,7 @@ export class FamilyPediaHandler {
         familyId
       );
 
-      let owner: FamilyMember;
+      let owner: RedisFamilyMember;
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== ownerId;
         if (!condition) {
@@ -202,7 +202,7 @@ export class FamilyPediaHandler {
         familyId
       );
 
-      let owner: FamilyMember;
+      let owner: RedisFamilyMember;
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== ownerId;
         if (!condition) {

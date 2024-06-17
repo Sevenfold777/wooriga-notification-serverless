@@ -1,7 +1,7 @@
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 
 export type HandlerReturnType = {
   result: boolean;
 
-  usersNotified?: FamilyMember[];
+  usersNotified?: RedisFamilyMember[];
 };

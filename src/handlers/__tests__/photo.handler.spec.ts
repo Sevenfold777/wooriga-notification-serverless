@@ -3,7 +3,7 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import { PhotoHandler } from "../photo.handler";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { sendNotification } from "src/utils/fcm/send-notification";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { mockClient } from "aws-sdk-client-mock";
 
@@ -42,29 +42,26 @@ describe("photo handler unit test", () => {
 
     const familyId = 10005;
 
-    const member1 = new FamilyMember(
-      familyId,
-      20013,
-      "name_10005_20013",
-      "token_10005_20013",
-      true
-    );
+    const member1 = new RedisFamilyMember();
+    member1.familyId = familyId;
+    member1.userId = 20013;
+    member1.userName = "name_10005_20013";
+    member1.fcmToken = "token_10005_20013";
+    member1.mktPushAgreed = true;
 
-    const member2 = new FamilyMember(
-      familyId,
-      20014,
-      "name_10005_20014",
-      "token_10005_20014",
-      true
-    );
+    const member2 = new RedisFamilyMember();
+    member2.familyId = familyId;
+    member2.userId = 20014;
+    member2.userName = "name_10005_20014";
+    member2.fcmToken = "token_10005_20014";
+    member2.mktPushAgreed = true;
 
-    const member3 = new FamilyMember(
-      familyId,
-      20015,
-      "name_10005_20015",
-      "token_10005_20015",
-      true
-    );
+    const member3 = new RedisFamilyMember();
+    member3.familyId = familyId;
+    member3.userId = 20015;
+    member3.userName = "name_10005_20015";
+    member3.fcmToken = "token_10005_20015";
+    member3.mktPushAgreed = true;
 
     const mockFamilyMembers = [member1, member2, member3];
 
@@ -98,30 +95,26 @@ describe("photo handler unit test", () => {
     const randomCommentPreview = "this is comment preview";
 
     const familyId = 10005;
+    const member1 = new RedisFamilyMember();
+    member1.familyId = familyId;
+    member1.userId = 20013;
+    member1.userName = "name_10005_20013";
+    member1.fcmToken = "token_10005_20013";
+    member1.mktPushAgreed = true;
 
-    const member1 = new FamilyMember(
-      familyId,
-      20013,
-      "name_10005_20013",
-      "token_10005_20013",
-      true
-    );
+    const member2 = new RedisFamilyMember();
+    member2.familyId = familyId;
+    member2.userId = 20014;
+    member2.userName = "name_10005_20014";
+    member2.fcmToken = "token_10005_20014";
+    member2.mktPushAgreed = true;
 
-    const member2 = new FamilyMember(
-      familyId,
-      20014,
-      "name_10005_20014",
-      "token_10005_20014",
-      true
-    );
-
-    const member3 = new FamilyMember(
-      familyId,
-      20015,
-      "name_10005_20015",
-      "token_10005_20015",
-      true
-    );
+    const member3 = new RedisFamilyMember();
+    member3.familyId = familyId;
+    member3.userId = 20015;
+    member3.userName = "name_10005_20015";
+    member3.fcmToken = "token_10005_20015";
+    member3.mktPushAgreed = true;
 
     const mockFamilyMembers = [member1, member2, member3];
 

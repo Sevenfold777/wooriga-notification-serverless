@@ -2,7 +2,7 @@ import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.se
 import MockRedis from "ioredis-mock";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { LetterHandler } from "../letter.handler";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import {
   NotifyBirthdayParam,
   TimeCapsulesOpenParam,
@@ -44,13 +44,12 @@ describe("letter handler unit test", () => {
 
     const familyId = 10005;
 
-    const member1 = new FamilyMember(
-      familyId,
-      20013,
-      "name_10005_20013",
-      "token_10005_20013",
-      true
-    );
+    const member1 = new RedisFamilyMember();
+    member1.familyId = familyId;
+    member1.userId = 20013;
+    member1.userName = "name_10005_20013";
+    member1.fcmToken = "token_10005_20013";
+    member1.mktPushAgreed = true;
 
     mockRedisFamilyMemberService.getUser.mockResolvedValueOnce(member1);
 
@@ -79,18 +78,17 @@ describe("letter handler unit test", () => {
     let newUserId = 20001;
 
     const mockFamilyMembers = mockFamilyIds.map((familyId) => {
-      const family: FamilyMember[] = [];
+      const family: RedisFamilyMember[] = [];
 
       for (let i = 0; i < USERS_IN_FAMILY_COUNT; i++) {
-        family.push(
-          new FamilyMember(
-            familyId,
-            newUserId,
-            `name_${familyId}_${newUserId}`,
-            `token_${familyId}_${newUserId}`,
-            true
-          )
-        );
+        const member1 = new RedisFamilyMember();
+        member1.familyId = familyId;
+        member1.userId = newUserId;
+        member1.userName = `name_${familyId}_${newUserId}`;
+        member1.fcmToken = `token_${familyId}_${newUserId}`;
+        member1.mktPushAgreed = true;
+
+        family.push(member1);
 
         newUserId++;
       }
@@ -142,18 +140,17 @@ describe("letter handler unit test", () => {
     let newUserId = 20001;
 
     const mockFamilyMembers = mockFamilyIds.map((familyId) => {
-      const family: FamilyMember[] = [];
+      const family: RedisFamilyMember[] = [];
 
       for (let i = 0; i < USERS_IN_FAMILY_COUNT; i++) {
-        family.push(
-          new FamilyMember(
-            familyId,
-            newUserId,
-            `name_${familyId}_${newUserId}`,
-            `token_${familyId}_${newUserId}`,
-            true
-          )
-        );
+        const member1 = new RedisFamilyMember();
+        member1.familyId = familyId;
+        member1.userId = newUserId;
+        member1.userName = `name_${familyId}_${newUserId}`;
+        member1.fcmToken = `token_${familyId}_${newUserId}`;
+        member1.mktPushAgreed = true;
+
+        family.push(member1);
 
         newUserId++;
       }

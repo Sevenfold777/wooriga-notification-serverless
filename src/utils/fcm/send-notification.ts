@@ -9,7 +9,7 @@ export async function sendNotification({
   param,
 }: SendNotifcationParamType): Promise<boolean> {
   try {
-    const tokensNotNull = tokens.filter((token) => token);
+    const tokensNotNull = tokens.filter((token) => Boolean(token));
 
     if (tokensNotNull.length === 0) {
       console.warn("No token to send exist.");
@@ -38,7 +38,7 @@ export async function sendNotification({
 
     return true;
   } catch (e) {
-    console.error(e.message);
+    console.error(e);
     return false;
   }
 }

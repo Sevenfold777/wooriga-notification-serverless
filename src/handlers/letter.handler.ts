@@ -6,7 +6,7 @@ import {
 import { LetterNotifTemplates } from "src/templates/letter.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
 import { SQSClient } from "@aws-sdk/client-sqs";
@@ -77,8 +77,8 @@ export class LetterHandler {
       );
 
       return { result: true, usersNotified: [receiver] };
-    } catch (error) {
-      console.error(error.message);
+    } catch (e) {
+      console.error(e);
       return { result: false };
     }
   }
@@ -88,7 +88,7 @@ export class LetterHandler {
     timaCapsules,
   }: TimeCapsulesOpenParam): Promise<HandlerReturnType> {
     try {
-      const usersNotified: FamilyMember[] = [];
+      const usersNotified: RedisFamilyMember[] = [];
 
       for (const tc of timaCapsules) {
         const { receiverId, senderId, letterId, familyId } = tc;
@@ -97,8 +97,8 @@ export class LetterHandler {
           familyId
         );
 
-        let receiver: FamilyMember;
-        let sender: FamilyMember;
+        let receiver: RedisFamilyMember;
+        let sender: RedisFamilyMember;
 
         familyMembers.forEach((user) => {
           switch (user.userId) {
@@ -182,7 +182,7 @@ export class LetterHandler {
     familyIdsWithBirthdayUserId,
   }: NotifyBirthdayParam): Promise<HandlerReturnType> {
     try {
-      const usersNotified: FamilyMember[] = [];
+      const usersNotified: RedisFamilyMember[] = [];
       const pushNotifReqs: Promise<boolean>[] = [];
 
       for (const familyMemberId of familyIdsWithBirthdayUserId) {
@@ -192,7 +192,7 @@ export class LetterHandler {
           familyId
         );
 
-        let birthUser: FamilyMember;
+        let birthUser: RedisFamilyMember;
         const restOfFamily = familyMembers.filter((user) => {
           const condition = user.userId !== birthdayUserId;
           if (!condition) {

@@ -39,7 +39,6 @@ export const handler = async (
   );
 
   // TODO: handle notifiaction requests on error
-
   await redis.quit();
 
   return {

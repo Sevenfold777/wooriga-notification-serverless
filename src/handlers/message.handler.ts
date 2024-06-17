@@ -6,7 +6,7 @@ import {
 import { MessageNotifTemplates } from "src/templates/message.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
 import { SQSClient } from "@aws-sdk/client-sqs";
@@ -101,7 +101,7 @@ export class MessageHandler {
         familyId
       );
 
-      let author: FamilyMember;
+      let author: RedisFamilyMember;
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== authorId;
         if (!condition) {

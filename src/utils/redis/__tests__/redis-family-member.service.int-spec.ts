@@ -1,6 +1,10 @@
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
 import { Redis } from "ioredis";
-import { RedisUserInfoType } from "../redis-user-info.type";
+import {
+  FAMILY_ID_PREFIX,
+  RedisUserInfoType,
+  USER_ID_PREFIX,
+} from "../redis-family-member.type";
 import {
   FAMILY_ID_BASE,
   TEST_FAMILY_COUNT,
@@ -32,12 +36,14 @@ describe("redis service integration test", () => {
         const userInfo: RedisUserInfoType = {
           userName: `name_${familyId}_${userId}`,
           fcmToken: `token_${familyId}_${userId}`,
-          mktPushAreed: Boolean(userId),
+          mktPushAgreed: Boolean(userId),
         };
 
-        const user = { [`userId:${userId}`]: JSON.stringify(userInfo) };
+        const userIdKey = USER_ID_PREFIX + String(userId);
+        const user = { [userIdKey]: JSON.stringify(userInfo) };
 
-        pipeline.hset(`familyId:${familyId}`, user);
+        const familyIdKey = FAMILY_ID_PREFIX + String(familyId);
+        pipeline.hset(familyIdKey, user);
       }
     }
 
@@ -48,7 +54,7 @@ describe("redis service integration test", () => {
     // clear test data
     await redis.unlink(
       [...Array(TEST_FAMILY_COUNT).keys()].map(
-        (x) => `familyId:${x + 1 + FAMILY_ID_BASE}`
+        (x) => FAMILY_ID_PREFIX + String(x + 1 + FAMILY_ID_BASE)
       )
     );
 

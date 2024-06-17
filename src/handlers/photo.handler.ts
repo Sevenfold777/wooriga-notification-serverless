@@ -5,7 +5,7 @@ import {
 import { PhotoNotifTemplates } from "src/templates/photo.template";
 import { CustomValidate } from "src/utils/custom-validate.decorator";
 import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { FamilyMember } from "src/utils/redis/family-member.entity";
+import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
 import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
 import { HandlerReturnType } from "./handler-return.type";
 import { SQSClient } from "@aws-sdk/client-sqs";
@@ -42,7 +42,7 @@ export class PhotoHandler {
         familyId
       );
 
-      let author: FamilyMember;
+      let author: RedisFamilyMember;
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== authorId;
         if (!condition) {
@@ -104,8 +104,8 @@ export class PhotoHandler {
       );
 
       return { result: true, usersNotified: [author, ...restOfFamily] };
-    } catch (error) {
-      console.error(error.message);
+    } catch (e) {
+      console.error(e);
       return { result: false };
     }
   }
@@ -122,7 +122,7 @@ export class PhotoHandler {
         familyId
       );
 
-      let author: FamilyMember;
+      let author: RedisFamilyMember;
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== authorId;
         if (!condition) {
@@ -167,8 +167,8 @@ export class PhotoHandler {
       );
 
       return { result: true, usersNotified: restOfFamily };
-    } catch (error) {
-      console.error(error.message);
+    } catch (e) {
+      console.error(e);
       return { result: false };
     }
   }
