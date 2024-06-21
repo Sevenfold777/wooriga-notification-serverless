@@ -20,7 +20,7 @@ export async function sendNotification({
       tokens: tokensNotNull,
       data: {
         ...(screen && { screen }),
-        ...(param && { param }),
+        ...(param && { param: JSON.stringify(param) }),
       },
       apns: { payload: { aps: { sound: "default" } } },
       android: {

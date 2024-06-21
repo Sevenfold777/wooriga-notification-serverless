@@ -1,5 +1,5 @@
 import MockRedis from "ioredis-mock";
-import { NotificationHandler } from "../notification.handler";
+import { NotificationHandler } from "./notification.handler";
 import { sendNotification } from "src/utils/fcm/send-notification";
 import { NotificationType } from "src/constants/notification-type";
 import { SqsNotificationReqDTO } from "src/dto/sqs-notification-req.dto";
@@ -29,10 +29,13 @@ describe("notification handler unit test", () => {
       param: {},
     } as unknown as SqsNotificationReqDTO<NotificationType>;
 
-    // when
-    notificationHandler.handleNotification(invalidNotifcation);
+    const consoleErrorSpy = jest.spyOn(console, "error");
 
-    // then --> TODO
+    // when
+    await notificationHandler.handleNotification(invalidNotifcation);
+
+    // then
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it("type과 맞지 않는 param 에러", async () => {
@@ -42,9 +45,12 @@ describe("notification handler unit test", () => {
       param: { titlePreview: "invalid param" },
     } as SqsNotificationReqDTO<NotificationType>;
 
-    // when
-    notificationHandler.handleNotification(invalidNotifcation);
+    const consoleErrorSpy = jest.spyOn(console, "error");
 
-    // then --> TODO
+    // when
+    await notificationHandler.handleNotification(invalidNotifcation);
+
+    // then
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 });

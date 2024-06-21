@@ -49,29 +49,30 @@ export class LetterHandler {
         isTimeCapsule
       );
 
-      const pushResult = await this.sendNotification({
-        tokens: [receiver.fcmToken],
+      const notificationArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: LETTER_RECEIVED,
-        //   param: {letterId}
+        screen: "LetterReceived",
+        param: { letterId },
+      };
+
+      const pushResult = await this.sendNotification({
+        tokens: [receiver.fcmToken],
+        ...notificationArgs,
       });
 
       if (!pushResult) {
         throw new Error("Push notification send failed.");
       }
 
-      // 3. TODO: handle save notification
+      // 3. save notification
       await sendMessageSQS(
         this.sqsClient,
         this.AWS_SQS_NOTIFICATION_STORE_URL,
         [
           {
             receiverId: receiverId,
-            title: notifPayload.title,
-            body: notifPayload.body,
-            // TODO: screen: LETTER_RECEIVED,
-            // param: {letterId}
+            ...notificationArgs,
           },
         ]
       );
@@ -120,20 +121,28 @@ export class LetterHandler {
             receiver.userName
           );
 
+        const receiverNotificationArgs = {
+          title: receiverNotifPayload.title,
+          body: receiverNotifPayload.body,
+          screen: "LetterReceived",
+          param: { letterId },
+        };
+
+        const senderNotificationArgs = {
+          title: senderNotifPayload.title,
+          body: senderNotifPayload.body,
+          screen: "LetterSent",
+          param: { letterId },
+        };
+
         const pushResult = await Promise.all([
           this.sendNotification({
             tokens: [receiver.fcmToken],
-            title: receiverNotifPayload.title,
-            body: receiverNotifPayload.body,
-            // TODO: screen: LETTER_RECEIVED,
-            // param: {letterId}
+            ...receiverNotificationArgs,
           }),
           this.sendNotification({
             tokens: [sender.fcmToken],
-            title: senderNotifPayload.title,
-            body: senderNotifPayload.body,
-            // TODO: screen: LETTER_SENT,
-            // param: {letterId}
+            ...senderNotificationArgs,
           }),
         ]);
 
@@ -152,17 +161,11 @@ export class LetterHandler {
           [
             {
               receiverId: receiverId,
-              title: receiverNotifPayload.title,
-              body: receiverNotifPayload.body,
-              // TODO: screen: LETTER_RECEIVED,
-              // param: {letterId}
+              ...receiverNotificationArgs,
             },
             {
               receiverId: senderId,
-              title: senderNotifPayload.title,
-              body: senderNotifPayload.body,
-              // TODO: screen: LETTER_RECEIVED,
-              // param: {letterId}
+              ...senderNotificationArgs,
             },
           ]
         );
@@ -210,13 +213,17 @@ export class LetterHandler {
           birthUser.userName
         );
 
+        const notificationArgs = {
+          title: notifPayload.title,
+          body: notifPayload.body,
+          screen: "LetterSend",
+          param: { targetId: birthUser.userId },
+        };
+
         pushNotifReqs.push(
           this.sendNotification({
             tokens: restOfFamily.map((res) => res.fcmToken),
-            title: notifPayload.title,
-            body: notifPayload.body,
-            // TODO: screen: LETTER_SEND,
-            // param: {receiverId: birthUserId}
+            ...notificationArgs,
           })
         );
 

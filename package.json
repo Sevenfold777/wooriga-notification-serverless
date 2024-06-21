@@ -40,7 +40,7 @@
       "ts"
     ],
     "rootDir": "src",
-    "testRegex": ".*\\.(int-spec|spec)\\.ts$",
+    "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
