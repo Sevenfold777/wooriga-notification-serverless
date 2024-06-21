@@ -61,8 +61,8 @@ export class DailyEmotionHandler {
         tokens: restOfFamily.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: MESSAGE_HOME,
-        //   param: {openEmotion: true, userId}
+        screen: "MessageHome",
+        param: { openEmotion: true, userId },
       });
 
       return { result: true, usersNotified: restOfFamily };
@@ -91,8 +91,8 @@ export class DailyEmotionHandler {
         tokens: [targetUser.fcmToken],
         title: notifPayload.title,
         body: notifPayload.body,
-        //  TODO: screen: MESSAGE_HOME,
-        // param: {openEmotion: true, userId}
+        screen: "MessageHome",
+        param: { openEmotion: true, userId },
       });
 
       return {

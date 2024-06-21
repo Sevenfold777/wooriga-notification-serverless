@@ -1,9 +1,9 @@
-import { RedisFamilyMemberService } from "./../utils/redis/redis-family-member.service";
-import { MessageHandler } from "./message.handler";
-import { DailyEmotionHandler } from "./daily-emotion.handler";
-import { FamilyPediaHandler } from "./family-pedia.handler";
-import { LetterHandler } from "./letter.handler";
-import { PhotoHandler } from "./photo.handler";
+import { RedisFamilyMemberService } from "./utils/redis/redis-family-member.service";
+import { MessageHandler } from "./handlers/message.handler";
+import { DailyEmotionHandler } from "./handlers/daily-emotion.handler";
+import { FamilyPediaHandler } from "./handlers/family-pedia.handler";
+import { LetterHandler } from "./handlers/letter.handler";
+import { PhotoHandler } from "./handlers/photo.handler";
 import { SqsNotificationReqDTO } from "src/dto/sqs-notification-req.dto";
 import { NotificationType } from "src/constants/notification-type";
 import {

@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { Context, APIGatewayProxyResult, SQSEvent } from "aws-lambda";
-import { NotificationHandler } from "src/handlers/notification.handler";
+import { NotificationHandler } from "src/notification.handler";
 import * as firebaseAdmin from "firebase-admin";
 import * as serviceAccount from "./wooriga-firebase-adminsdk.json";
 import { Redis } from "ioredis";

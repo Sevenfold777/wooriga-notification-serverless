@@ -70,15 +70,15 @@ export class PhotoHandler {
           tokens: [author.fcmToken],
           title: authorNotifPayload.title,
           body: authorNotifPayload.body,
-          //   TODO: screen: PHOTO,
-          //   param: {photoId}
+          screen: "Photo",
+          param: { photoId },
         }),
         this.sendNotification({
           tokens: restOfFamily.map((res) => res.fcmToken),
           title: othersNotifPayload.title,
           body: othersNotifPayload.body,
-          //   TODO: screen: PHOTO,
-          //   param: {photoId}
+          screen: "Photo",
+          param: { photoId },
         }),
       ]);
 
@@ -98,8 +98,8 @@ export class PhotoHandler {
           receiverId: member.userId,
           title: othersNotifPayload.title,
           body: othersNotifPayload.body,
-          //   TODO: screen: PHOTO,
-          //   param: {photoId}
+          screen: "Photo",
+          param: { photoId },
         })) // 사진 게시자에게는 푸시 알림만 전송 (저장 X)
       );
 
@@ -141,12 +141,16 @@ export class PhotoHandler {
         commentPreview
       );
 
-      const pushResult = await this.sendNotification({
-        tokens: restOfFamily.map((res) => res.fcmToken),
+      const notifArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: PHOTO,
-        //   param: {photoId}
+        screen: "Photo",
+        param: { photoId },
+      };
+
+      const pushResult = await this.sendNotification({
+        tokens: restOfFamily.map((res) => res.fcmToken),
+        ...notifArgs,
       });
 
       if (!pushResult) {
@@ -159,10 +163,7 @@ export class PhotoHandler {
         this.AWS_SQS_NOTIFICATION_STORE_URL,
         restOfFamily.map((member) => ({
           receiverId: member.userId,
-          title: notifPayload.title,
-          body: notifPayload.body,
-          //   TODO: screen: PHOTO,
-          //   param: {photoId}
+          ...notifArgs,
         })) // 사진 게시자에게는 푸시 알림만 전송 (저장 X)
       );
 

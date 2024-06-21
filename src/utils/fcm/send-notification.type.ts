@@ -3,5 +3,5 @@ export type SendNotifcationParamType = {
   title: string;
   body: string;
   screen?: string;
-  param?: string;
+  param?: any;
 };

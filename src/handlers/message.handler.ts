@@ -46,8 +46,7 @@ export class MessageHandler {
         tokens: users.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: MESSAGE_HOME,
-        //   param: {}
+        screen: "MessageHome",
       });
 
       if (!pushResult) {
@@ -75,8 +74,7 @@ export class MessageHandler {
         tokens: users.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        //   TODO: screen: MESSAGE_HOME,
-        //   param: {}
+        screen: "MessageHome",
       });
 
       if (!pushResult) {
@@ -120,28 +118,29 @@ export class MessageHandler {
         commentPreview
       );
 
-      const pushResult = await this.sendNotification({
-        tokens: restOfFamily.map((res) => res.fcmToken),
+      const notifArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
-        // TODO: screen: MESSAGE_FAMILY,
-        // param: {messageFamId}
+        screen: "MessageFamily",
+        param: { messageId: messageFamId },
+      };
+
+      const pushResult = await this.sendNotification({
+        tokens: restOfFamily.map((res) => res.fcmToken),
+        ...notifArgs,
       });
 
       if (!pushResult) {
         throw new Error("Push notification send failed.");
       }
 
-      // 3. TODO: handle save notification
+      // 3. handle notification save
       await sendMessageSQS(
         this.sqsClient,
         this.AWS_SQS_NOTIFICATION_STORE_URL,
         restOfFamily.map((member) => ({
           receiverId: member.userId,
-          title: notifPayload.title,
-          body: notifPayload.body,
-          // TODO: screen: MESSAGE_FAMILY,
-          // param: {messageFamId}
+          ...notifArgs,
         }))
       );
 
