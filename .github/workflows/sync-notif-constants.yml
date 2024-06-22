@@ -1,0 +1,78 @@
+name: Sync notification constants
+# synchronize notification constants between notif-server and main-api
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Unit test
+        run: yarn test
+
+  sync-files:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check difference between
+        id: check_changes
+        run: |
+          if git diff --quiet HEAD^ HEAD -- src/constants; then
+            echo "no changes detected"
+          else
+            echo "changes-detected=true" >> $GITHUB_ENV
+          fi
+
+      - name: Install Github CLI
+        run: |
+          (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
+          && sudo mkdir -p -m 755 /etc/apt/keyrings \
+          && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+          && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && sudo apt update \
+          && sudo apt install gh -y
+          sudo apt update
+          sudo apt install gh
+
+      - name: Sync notification constants & push commit & Create PR
+        if: env.changes-detected == 'true'
+        env:
+          GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
+          MAIN_API_REPO: Sevenfold777/wooriga-backend-gql
+          BRANCH_NAME: sync-notif-constants
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git clone https://github.com/${{ env.MAIN_API_REPO }} main-api
+          cp -r src/constants main-api/src/sqs-notification
+          cd main-api
+          git checkout -b ${{ env.BRANCH_NAME }}
+          git add src/sqs-notification/constants
+          git commit -m 'sync shared notification constants from notification repo'
+          git push --set-upstream https://${{ env.GITHUB_TOKEN }}@github.com/${{ env.MAIN_API_REPO }} $BRANCH_NAME
+          gh pr create \
+            --title "[Github Actions] 알림 repo와 Main API repo 동기화" \
+            --body "Github Action에 의하여 알림 repo와 공유된 types, enums에서의 변경 감지, 이에 따른 동기화 요청" \
+            --head "${{ env.BRANCH_NAME }}" \
+            --base "main"
+
+# 추후에는 main branch 대신 dev branch에 대한 pr 생성

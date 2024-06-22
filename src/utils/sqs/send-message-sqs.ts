@@ -1,10 +1,10 @@
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { CreateNotificationReqDTO } from "src/dto/create-notification-req.dto";
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { CreateNotificationReqDTO } from 'src/dto/create-notification-req.dto';
 
 export async function sendMessageSQS(
   client: SQSClient,
   queueUrl: string,
-  reqDtos: CreateNotificationReqDTO[]
+  reqDtos: CreateNotificationReqDTO[],
 ): Promise<boolean> {
   try {
     const command = new SendMessageCommand({

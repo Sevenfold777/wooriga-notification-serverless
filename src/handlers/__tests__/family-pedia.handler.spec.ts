@@ -1,25 +1,25 @@
-import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { FamilyPediaHandler } from "../family-pedia.handler";
-import MockRedis from "ioredis-mock";
-import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
-import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { mockClient } from "aws-sdk-client-mock";
+import { RedisFamilyMemberService } from 'src/utils/redis/redis-family-member.service';
+import { FamilyPediaHandler } from '../family-pedia.handler';
+import MockRedis from 'ioredis-mock';
+import { SendNotifcationParamType } from 'src/utils/fcm/send-notification.type';
+import { RedisFamilyMember } from 'src/utils/redis/redis-family-member.entity';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { mockClient } from 'aws-sdk-client-mock';
 
-jest.mock("src/utils/redis/redis-family-member.service");
+jest.mock('src/utils/redis/redis-family-member.service');
 
-describe("family-pedia handler unit test", () => {
+describe('family-pedia handler unit test', () => {
   let familyPediaHandler: FamilyPediaHandler;
   let mockRedisFamilyMemberService: jest.Mocked<RedisFamilyMemberService>;
 
   beforeAll(() => {
     mockRedisFamilyMemberService = new RedisFamilyMemberService(
-      new MockRedis()
+      new MockRedis(),
     ) as jest.Mocked<RedisFamilyMemberService>;
 
     // mock sendNotification to inject to handler constructor
     const mockSendNotification = jest.fn((args: SendNotifcationParamType) =>
-      Promise.resolve(true)
+      Promise.resolve(true),
     );
 
     // mock sqs client
@@ -30,19 +30,19 @@ describe("family-pedia handler unit test", () => {
     familyPediaHandler = new FamilyPediaHandler(
       mockRedisFamilyMemberService,
       mockSendNotification,
-      sqsClient
+      sqsClient,
     );
   });
 
-  it("family-pedia question created", async () => {
+  it('family-pedia question created', async () => {
     // given
     const familyId = 10005;
 
     const member1 = new RedisFamilyMember();
     member1.familyId = familyId;
     member1.userId = 20013;
-    member1.userName = "name_10005_20013";
-    member1.fcmToken = "token_10005_20013";
+    member1.userName = 'name_10005_20013';
+    member1.fcmToken = 'token_10005_20013';
     member1.mktPushAgreed = true;
 
     mockRedisFamilyMemberService.getUser.mockResolvedValueOnce(member1);
@@ -61,15 +61,15 @@ describe("family-pedia handler unit test", () => {
     expect(usersNotified[0]).toEqual(member1);
   });
 
-  it("family-pedia question editted", async () => {
+  it('family-pedia question editted', async () => {
     // given
     const familyId = 10005;
 
     const member1 = new RedisFamilyMember();
     member1.familyId = familyId;
     member1.userId = 20013;
-    member1.userName = "name_10005_20013";
-    member1.fcmToken = "token_10005_20013";
+    member1.userName = 'name_10005_20013';
+    member1.fcmToken = 'token_10005_20013';
     member1.mktPushAgreed = true;
 
     mockRedisFamilyMemberService.getUser.mockResolvedValueOnce(member1);
@@ -88,35 +88,35 @@ describe("family-pedia handler unit test", () => {
     expect(usersNotified[0]).toEqual(member1);
   });
 
-  it("family-pedia answered", async () => {
+  it('family-pedia answered', async () => {
     // given
     const familyId = 10005;
 
     const member1 = new RedisFamilyMember();
     member1.familyId = familyId;
     member1.userId = 20013;
-    member1.userName = "name_10005_20013";
-    member1.fcmToken = "token_10005_20013";
+    member1.userName = 'name_10005_20013';
+    member1.fcmToken = 'token_10005_20013';
     member1.mktPushAgreed = true;
 
     const member2 = new RedisFamilyMember();
     member2.familyId = familyId;
     member2.userId = 20014;
-    member2.userName = "name_10005_20014";
-    member2.fcmToken = "token_10005_20014";
+    member2.userName = 'name_10005_20014';
+    member2.fcmToken = 'token_10005_20014';
     member2.mktPushAgreed = true;
 
     const member3 = new RedisFamilyMember();
     member3.familyId = familyId;
     member3.userId = 20015;
-    member3.userName = "name_10005_20015";
-    member3.fcmToken = "token_10005_20015";
+    member3.userName = 'name_10005_20015';
+    member3.fcmToken = 'token_10005_20015';
     member3.mktPushAgreed = true;
 
     const mockFamilyMembers = [member1, member2, member3];
 
     mockRedisFamilyMemberService.getFamily.mockResolvedValueOnce(
-      mockFamilyMembers
+      mockFamilyMembers,
     );
 
     // when
@@ -134,41 +134,42 @@ describe("family-pedia handler unit test", () => {
     expect(usersNotified[1]).toEqual(member3);
   });
 
-  it("family-pedia edit photo", async () => {
+  it('family-pedia edit photo', async () => {
     // given
     const familyId = 10005;
 
     const member1 = new RedisFamilyMember();
     member1.familyId = familyId;
     member1.userId = 20013;
-    member1.userName = "name_10005_20013";
-    member1.fcmToken = "token_10005_20013";
+    member1.userName = 'name_10005_20013';
+    member1.fcmToken = 'token_10005_20013';
     member1.mktPushAgreed = true;
 
     const member2 = new RedisFamilyMember();
     member2.familyId = familyId;
     member2.userId = 20014;
-    member2.userName = "name_10005_20014";
-    member2.fcmToken = "token_10005_20014";
+    member2.userName = 'name_10005_20014';
+    member2.fcmToken = 'token_10005_20014';
     member2.mktPushAgreed = true;
 
     const member3 = new RedisFamilyMember();
     member3.familyId = familyId;
     member3.userId = 20015;
-    member3.userName = "name_10005_20015";
-    member3.fcmToken = "token_10005_20015";
+    member3.userName = 'name_10005_20015';
+    member3.fcmToken = 'token_10005_20015';
     member3.mktPushAgreed = true;
 
     const mockFamilyMembers = [member1, member2, member3];
 
     mockRedisFamilyMemberService.getFamily.mockResolvedValueOnce(
-      mockFamilyMembers
+      mockFamilyMembers,
     );
 
     // when
     const { result, usersNotified } = await familyPediaHandler.pediaEditPhoto({
       familyId,
       ownerId: member2.userId,
+      editorId: member2.userId,
     });
 
     // then
