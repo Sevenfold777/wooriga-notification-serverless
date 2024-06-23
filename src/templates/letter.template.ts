@@ -1,5 +1,5 @@
-import { NotificationType } from "src/constants/notification-type";
-import { TemplateReturnType } from "./common";
+import { NotificationType } from 'src/constants/notification-type';
+import { TemplateReturnType } from './common';
 
 export const LetterNotifTemplates = {
   [NotificationType.LETTER_SEND]: letterSendTemplate,
@@ -12,7 +12,7 @@ export const LetterNotifTemplates = {
 
 function letterSendTemplate(
   receiverName: string,
-  isTimeCapsule: boolean
+  isTimeCapsule: boolean,
 ): TemplateReturnType {
   return isTimeCapsule
     ? {
@@ -33,11 +33,11 @@ function timeCapsulesOpenReceiverTemplate(): TemplateReturnType {
 }
 
 function timeCapsulesOpenSenderTemplate(
-  receiverName: string
+  receiverName: string,
 ): TemplateReturnType {
   return {
     title: `우리가 편지`,
-    body: `${receiverName} 님에게 작성한 타임캡슐이 열렸습니다!`,
+    body: `${receiverName} 님에게 작성한 타임캡슐이 공개되었습니다!`,
   };
 }
 

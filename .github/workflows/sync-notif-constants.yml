@@ -25,6 +25,34 @@ jobs:
       - name: Unit test
         run: yarn test
 
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build
+        run: yarn build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy updates to AWS Lambda
+        run: aws lambda update-function-code --function-name ${{ secrets.AWS_LAMBDA_NAME }} --zip-file "fileb://dist/index.zip"
+
   sync-files:
     needs: test
     runs-on: ubuntu-latest
@@ -75,4 +103,4 @@ jobs:
             --head "${{ env.BRANCH_NAME }}" \
             --base "main"
 
-# 추후에는 main branch 대신 dev branch에 대한 pr 생성
+        # 추후에는 main branch 대신 dev branch에 대한 pr 생성

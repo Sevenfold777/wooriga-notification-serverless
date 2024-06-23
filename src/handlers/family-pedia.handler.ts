@@ -207,9 +207,15 @@ export class FamilyPediaHandler {
       );
 
       let owner: RedisFamilyMember;
+      let editor: RedisFamilyMember;
+
       const restOfFamily = familyMembers.filter((user) => {
         const condition = user.userId !== editorId;
         if (!condition) {
+          editor = user;
+        }
+
+        if (user.userId === ownerId) {
           owner = user;
         }
 
@@ -224,12 +230,16 @@ export class FamilyPediaHandler {
         owner.userName,
       );
 
-      const pushResult = await this.sendNotification({
-        tokens: restOfFamily.map((res) => res.fcmToken),
+      const notifArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
         screen: 'FamilyPediaMember',
         param: { pediaId: ownerId },
+      };
+
+      const pushResult = await this.sendNotification({
+        tokens: restOfFamily.map((res) => res.fcmToken),
+        ...notifArgs,
       });
 
       if (!pushResult) {
@@ -242,10 +252,7 @@ export class FamilyPediaHandler {
         this.AWS_SQS_NOTIFICATION_STORE_URL,
         restOfFamily.map((member) => ({
           receiverId: member.userId,
-          title: notifPayload.title,
-          body: notifPayload.body,
-          screen: 'FamilyPediaMember',
-          param: { pediaId: ownerId },
+          ...notifArgs,
         })),
       );
 

@@ -1,5 +1,5 @@
-import { plainToInstance } from "class-transformer";
-import { validate, validateOrReject } from "class-validator";
+import { plainToInstance } from 'class-transformer';
+import { validate, validateOrReject } from 'class-validator';
 
 /**
  * 프로그래머가 직접 호출한 함수와 같이 Global Pipe를 타지 않는 환경에서도
@@ -8,12 +8,12 @@ import { validate, validateOrReject } from "class-validator";
  * class-transformer가 사용할 검증할 class. Plain object를 해당 클래스로 변환
  */
 export function CustomValidate<T extends object>(
-  classConstructor: new () => T
+  classConstructor: new () => T,
 ) {
   return function (
     target: any,
     targetName: string,
-    descriptor: TypedPropertyDescriptor<any>
+    descriptor: TypedPropertyDescriptor<any>,
   ) {
     const method = descriptor.value;
 
@@ -25,17 +25,17 @@ export function CustomValidate<T extends object>(
         const invalidList: T[] = [];
 
         const errors = await Promise.all(
-          validateTarget.map((elem) => validate(elem))
+          validateTarget.map((elem) => validate(elem)),
         );
 
         errors.forEach((errList, idx) =>
           errList.length === 0
             ? validList.push(validateTarget[idx])
-            : invalidList.push(validateTarget[idx])
+            : invalidList.push(validateTarget[idx]),
         );
 
         const errorMessage = `[ Validation Error ]\n Invalid Instances: ${JSON.stringify(
-          invalidList
+          invalidList,
         )}\n Causes: ${errors}`;
 
         if (validList.length === 0) {

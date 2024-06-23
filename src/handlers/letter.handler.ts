@@ -2,20 +2,20 @@ import {
   LetterSendParam,
   NotifyBirthdayParam,
   TimeCapsulesOpenParam,
-} from "src/constants/letter-notification";
-import { LetterNotifTemplates } from "src/templates/letter.template";
-import { CustomValidate } from "src/utils/custom-validate.decorator";
-import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
-import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
-import { HandlerReturnType } from "./handler-return.type";
-import { SQSClient } from "@aws-sdk/client-sqs";
-import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
+} from 'src/constants/letter-notification';
+import { LetterNotifTemplates } from 'src/templates/letter.template';
+import { CustomValidate } from 'src/utils/custom-validate.decorator';
+import { RedisFamilyMemberService } from 'src/utils/redis/redis-family-member.service';
+import { RedisFamilyMember } from 'src/utils/redis/redis-family-member.entity';
+import { SendNotifcationParamType } from 'src/utils/fcm/send-notification.type';
+import { HandlerReturnType } from './handler-return.type';
+import { SQSClient } from '@aws-sdk/client-sqs';
+import { sendMessageSQS } from 'src/utils/sqs/send-message-sqs';
 
 export class LetterHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
-    args: SendNotifcationParamType
+    args: SendNotifcationParamType,
   ) => Promise<boolean>;
   private sqsClient: SQSClient;
   private readonly AWS_SQS_NOTIFICATION_STORE_URL =
@@ -24,7 +24,7 @@ export class LetterHandler {
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
     sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
@@ -41,19 +41,20 @@ export class LetterHandler {
     try {
       const receiver = await this.redisFamilyMemberService.getUser(
         familyId,
-        receiverId
+        receiverId,
       );
 
       const notifPayload = LetterNotifTemplates.LETTER_SEND(
         receiver.userName,
-        isTimeCapsule
+        isTimeCapsule,
       );
 
       const notificationArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
-        screen: "LetterReceived",
-        param: { letterId },
+        ...(isTimeCapsule
+          ? { screen: 'TimeCapsulesNav' }
+          : { screen: 'LetterReceived', param: { letterId } }),
       };
 
       const pushResult = await this.sendNotification({
@@ -62,7 +63,7 @@ export class LetterHandler {
       });
 
       if (!pushResult) {
-        throw new Error("Push notification send failed.");
+        throw new Error('Push notification send failed.');
       }
 
       // 3. save notification
@@ -74,7 +75,7 @@ export class LetterHandler {
             receiverId: receiverId,
             ...notificationArgs,
           },
-        ]
+        ],
       );
 
       return { result: true, usersNotified: [receiver] };
@@ -95,7 +96,7 @@ export class LetterHandler {
         const { receiverId, senderId, letterId, familyId } = tc;
 
         const familyMembers = await this.redisFamilyMemberService.getFamily(
-          familyId
+          familyId,
         );
 
         let receiver: RedisFamilyMember;
@@ -118,20 +119,20 @@ export class LetterHandler {
           LetterNotifTemplates.TIMECAPSULE_OPEN.receiverTemplate();
         const senderNotifPayload =
           LetterNotifTemplates.TIMECAPSULE_OPEN.senderTemplate(
-            receiver.userName
+            receiver.userName,
           );
 
         const receiverNotificationArgs = {
           title: receiverNotifPayload.title,
           body: receiverNotifPayload.body,
-          screen: "LetterReceived",
+          screen: 'LetterReceived',
           param: { letterId },
         };
 
         const senderNotificationArgs = {
           title: senderNotifPayload.title,
           body: senderNotifPayload.body,
-          screen: "LetterSent",
+          screen: 'LetterSent',
           param: { letterId },
         };
 
@@ -147,11 +148,11 @@ export class LetterHandler {
         ]);
 
         if (!pushResult[0]) {
-          throw new Error("Push notification send failed.");
+          throw new Error('Push notification send failed.');
         }
 
         if (!pushResult[1]) {
-          throw new Error("Push notification send failed.");
+          throw new Error('Push notification send failed.');
         }
 
         // 3. handle save notification
@@ -167,13 +168,14 @@ export class LetterHandler {
               receiverId: senderId,
               ...senderNotificationArgs,
             },
-          ]
+          ],
         );
 
         // for test, 운영 상에는 관여하지 않음
         usersNotified.push(receiver);
         usersNotified.push(sender);
       }
+
       return { result: true, usersNotified };
     } catch (error) {
       return { result: false };
@@ -192,7 +194,7 @@ export class LetterHandler {
         const { familyId, birthdayUserId } = familyMemberId;
 
         const familyMembers = await this.redisFamilyMemberService.getFamily(
-          familyId
+          familyId,
         );
 
         let birthUser: RedisFamilyMember;
@@ -210,13 +212,13 @@ export class LetterHandler {
         }
 
         const notifPayload = LetterNotifTemplates.NOTIFY_BIRTHDAY(
-          birthUser.userName
+          birthUser.userName,
         );
 
         const notificationArgs = {
           title: notifPayload.title,
           body: notifPayload.body,
-          screen: "LetterSend",
+          screen: 'LetterSend',
           param: { targetId: birthUser.userId },
         };
 
@@ -224,7 +226,7 @@ export class LetterHandler {
           this.sendNotification({
             tokens: restOfFamily.map((res) => res.fcmToken),
             ...notificationArgs,
-          })
+          }),
         );
 
         usersNotified.push(...restOfFamily);
@@ -234,7 +236,7 @@ export class LetterHandler {
 
       for (const result of results) {
         if (!result) {
-          throw new Error("Push notification send failed.");
+          throw new Error('Push notification send failed.');
         }
       }
 

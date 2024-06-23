@@ -2,20 +2,20 @@ import {
   CommentMessageParam,
   MessageBirthdayParam,
   MessageTodayParam,
-} from "src/constants/message-notification";
-import { MessageNotifTemplates } from "src/templates/message.template";
-import { CustomValidate } from "src/utils/custom-validate.decorator";
-import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { RedisFamilyMember } from "src/utils/redis/redis-family-member.entity";
-import { SendNotifcationParamType } from "src/utils/fcm/send-notification.type";
-import { HandlerReturnType } from "./handler-return.type";
-import { SQSClient } from "@aws-sdk/client-sqs";
-import { sendMessageSQS } from "src/utils/sqs/send-message-sqs";
+} from 'src/constants/message-notification';
+import { MessageNotifTemplates } from 'src/templates/message.template';
+import { CustomValidate } from 'src/utils/custom-validate.decorator';
+import { RedisFamilyMemberService } from 'src/utils/redis/redis-family-member.service';
+import { RedisFamilyMember } from 'src/utils/redis/redis-family-member.entity';
+import { SendNotifcationParamType } from 'src/utils/fcm/send-notification.type';
+import { HandlerReturnType } from './handler-return.type';
+import { SQSClient } from '@aws-sdk/client-sqs';
+import { sendMessageSQS } from 'src/utils/sqs/send-message-sqs';
 
 export class MessageHandler {
   private redisFamilyMemberService: RedisFamilyMemberService;
   private sendNotification: (
-    args: SendNotifcationParamType
+    args: SendNotifcationParamType,
   ) => Promise<boolean>;
   private sqsClient: SQSClient;
   private readonly AWS_SQS_NOTIFICATION_STORE_URL =
@@ -24,7 +24,7 @@ export class MessageHandler {
   constructor(
     redisFamilyMemberService: RedisFamilyMemberService,
     sendNotification: (args: SendNotifcationParamType) => Promise<boolean>,
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
   ) {
     this.redisFamilyMemberService = redisFamilyMemberService;
     this.sendNotification = sendNotification;
@@ -37,7 +37,7 @@ export class MessageHandler {
   }: MessageTodayParam): Promise<HandlerReturnType> {
     try {
       const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
-        familyIds
+        familyIds,
       );
 
       const notifPayload = MessageNotifTemplates.MESSAGE_TODAY();
@@ -46,11 +46,11 @@ export class MessageHandler {
         tokens: users.map((res) => res.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        screen: "MessageHome",
+        screen: 'MessageHome',
       });
 
       if (!pushResult) {
-        throw new Error("Push notification send failed.");
+        throw new Error('Push notification send failed.');
       }
 
       return { result: true, usersNotified: users };
@@ -65,20 +65,20 @@ export class MessageHandler {
   }: MessageBirthdayParam): Promise<HandlerReturnType> {
     try {
       const users = await this.redisFamilyMemberService.getFamilyMembersByIds(
-        familyIds
+        familyIds,
       );
 
       const notifPayload = MessageNotifTemplates.MESSAGE_BIRTHDAY();
 
       const pushResult = await this.sendNotification({
-        tokens: users.map((res) => res.fcmToken),
+        tokens: users.map((user) => user.fcmToken),
         title: notifPayload.title,
         body: notifPayload.body,
-        screen: "MessageHome",
+        screen: 'MessageHome',
       });
 
       if (!pushResult) {
-        throw new Error("Push notification send failed.");
+        throw new Error('Push notification send failed.');
       }
 
       return { result: true, usersNotified: users };
@@ -96,7 +96,7 @@ export class MessageHandler {
   }: CommentMessageParam): Promise<HandlerReturnType> {
     try {
       const familyMembers = await this.redisFamilyMemberService.getFamily(
-        familyId
+        familyId,
       );
 
       let author: RedisFamilyMember;
@@ -115,13 +115,13 @@ export class MessageHandler {
 
       const notifPayload = MessageNotifTemplates.COMMENT_MESSAGE(
         author.userName,
-        commentPreview
+        commentPreview,
       );
 
       const notifArgs = {
         title: notifPayload.title,
         body: notifPayload.body,
-        screen: "MessageFamily",
+        screen: 'MessageFamily',
         param: { messageId: messageFamId },
       };
 
@@ -131,7 +131,7 @@ export class MessageHandler {
       });
 
       if (!pushResult) {
-        throw new Error("Push notification send failed.");
+        throw new Error('Push notification send failed.');
       }
 
       // 3. handle notification save
@@ -141,7 +141,7 @@ export class MessageHandler {
         restOfFamily.map((member) => ({
           receiverId: member.userId,
           ...notifArgs,
-        }))
+        })),
       );
 
       return { result: true, usersNotified: restOfFamily };
