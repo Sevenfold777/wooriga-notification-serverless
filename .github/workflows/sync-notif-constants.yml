@@ -25,51 +25,22 @@ jobs:
       - name: Unit test
         run: yarn test
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build
-        run: yarn build
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Deploy updates to AWS Lambda
-        run: aws lambda update-function-code --function-name ${{ secrets.AWS_LAMBDA_NAME }} --zip-file "fileb://dist/index.zip"
-
   sync-files:
     needs: test
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Check difference between
         id: check_changes
         run: |
-          if git diff --quiet HEAD^ HEAD -- src/constants; then
-            echo "no changes detected"
-          else
-            echo "changes-detected=true" >> $GITHUB_ENV
-          fi
+          git diff --quiet HEAD^ HEAD -- src/constants || echo "changes-detected=true" >> $GITHUB_ENV
 
       - name: Install Github CLI
+        if: ${{ env.changes-detected == 'true' }}
         run: |
           (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
           && sudo mkdir -p -m 755 /etc/apt/keyrings \
@@ -82,7 +53,7 @@ jobs:
           sudo apt install gh
 
       - name: Sync notification constants & push commit & Create PR
-        if: env.changes-detected == 'true'
+        if: ${{ env.changes-detected == 'true' }}
         env:
           GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
           MAIN_API_REPO: Sevenfold777/wooriga-backend-gql
@@ -104,3 +75,32 @@ jobs:
             --base "main"
 
         # 추후에는 main branch 대신 dev branch에 대한 pr 생성
+
+  # deploy 지금 필수적이지 않기에 주석 처리
+  # deploy:
+  #   needs: test
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20.x
+
+  #     - name: Install dependencies
+  #       run: yarn install
+
+  #     - name: Build
+  #       run: yarn build
+
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  #     - name: Deploy updates to AWS Lambda
+  #       run: aws lambda update-function-code --function-name ${{ secrets.AWS_LAMBDA_NAME }} --zip-file "fileb://dist/index.zip"
