@@ -5,8 +5,6 @@ import { SqsNotificationReqDTO } from 'src/dto/sqs-notification-req.dto';
 export function mockEventRecordGenerator(
   body: SqsNotificationReqDTO<NotificationType>,
 ): SQSRecord {
-  '{"type":"EMOTION_CHOSEN","param":{"familyId":3, "userId": 4},"save":false}';
-
   return {
     messageId: '19dd0b57-b21e-4ac1-bd88-01bbb068cb78',
     receiptHandle: 'MessageReceiptHandle',

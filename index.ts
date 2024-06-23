@@ -27,6 +27,7 @@ export const handler = async (
   });
 
   const sqsClient = new SQSClient();
+  // for credential needed environment
   // const sqsClient = new SQSClient({
   //   credentials: {
   //     accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -41,11 +42,12 @@ export const handler = async (
     sqsClient,
   );
 
-  const result = await Promise.allSettled(
+  // try catch를 타이트하게 구현해서 allSettled는 예외적인 상황이 아니면 fulfillled
+  // 예외적인 사유로 실패한 경우는 sqs 배치 항목 실패 보고를 통해 확인
+  await Promise.allSettled(
     notifList.map((notif) => notificationHandler.handleNotification(notif)),
   );
 
-  // TODO: handle notifiaction requests on error
   await redis.quit();
 
   return {
