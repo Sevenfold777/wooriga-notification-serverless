@@ -1,19 +1,19 @@
-import { RedisFamilyMemberService } from "src/utils/redis/redis-family-member.service";
-import { Redis } from "ioredis";
+import { RedisFamilyMemberService } from 'src/utils/redis/redis-family-member.service';
+import { Redis } from 'ioredis';
 import {
   FAMILY_ID_PREFIX,
   RedisUserInfoType,
   USER_ID_PREFIX,
-} from "../redis-family-member.type";
+} from '../redis-family-member.type';
 import {
   FAMILY_ID_BASE,
   TEST_FAMILY_COUNT,
   TEST_MEMBERS_EACH_COUNT,
   USER_ID_BASE,
-} from "./config";
-import "dotenv/config";
+} from './config';
+import 'dotenv/config';
 
-describe("redis service integration test", () => {
+describe('redis service integration test', () => {
   let redisFamilyMemberService: RedisFamilyMemberService;
   let redis: Redis;
 
@@ -54,20 +54,23 @@ describe("redis service integration test", () => {
     // clear test data
     await redis.unlink(
       [...Array(TEST_FAMILY_COUNT).keys()].map(
-        (x) => FAMILY_ID_PREFIX + String(x + 1 + FAMILY_ID_BASE)
-      )
+        (x) => FAMILY_ID_PREFIX + String(x + 1 + FAMILY_ID_BASE),
+      ),
     );
 
     await redis.quit();
   });
 
-  it("get Family", async () => {
+  it('get Family', async () => {
+    // given
     const tgtFamilyId = FAMILY_ID_BASE + 5;
 
+    // when
     const familyMembers = await redisFamilyMemberService.getFamily(tgtFamilyId);
 
     familyMembers.sort((a, b) => a.userId - b.userId);
 
+    // then
     expect(familyMembers.length).toBe(TEST_MEMBERS_EACH_COUNT);
 
     familyMembers.forEach((user, idx) => {
@@ -84,7 +87,9 @@ describe("redis service integration test", () => {
     });
   });
 
-  it("get User", async () => {
+  it('get User', async () => {
+    // given
+
     // 5번 가족의, 2번 사용자
     const tgtFamilyId = FAMILY_ID_BASE + 5;
     const tgtUserId =
@@ -92,11 +97,13 @@ describe("redis service integration test", () => {
       2 +
       (tgtFamilyId - FAMILY_ID_BASE - 1) * TEST_MEMBERS_EACH_COUNT;
 
+    // when
     const familyMember = await redisFamilyMemberService.getUser(
       tgtFamilyId,
-      tgtUserId
+      tgtUserId,
     );
 
+    // then
     expect(familyMember.familyId).toBe(tgtFamilyId);
     expect(familyMember.userId).toBe(tgtUserId);
     expect(familyMember.userName).toBe(`name_${tgtFamilyId}_${tgtUserId}`);
@@ -104,20 +111,22 @@ describe("redis service integration test", () => {
     expect(familyMember.mktPushAgreed).toBe(Boolean(tgtUserId));
   });
 
-  it("get FamilyMembers By Ids", async () => {
+  it('get FamilyMembers By Ids', async () => {
+    // given
     const TGT_FAMILY_COUNT = 5;
     // const TGT_FAMILY_COUNT = TEST_FAMILY_COUNT; // 가족 전체 검색용 테스트
 
     const tgtFamilyIds = [...Array(TGT_FAMILY_COUNT).keys()].map(
-      (x) => FAMILY_ID_BASE + 2 * x + 1
+      (x) => FAMILY_ID_BASE + 2 * x + 1,
     );
 
     // const tgtFamilyIds = [...Array(TGT_FAMILY_COUNT).keys()].map(
     //   (x) => FAMILY_ID_BASE + x + 1
     // ); // 가족 전체 검색용 테스트
 
+    // when
     const users = await redisFamilyMemberService.getFamilyMembersByIds(
-      tgtFamilyIds
+      tgtFamilyIds,
     );
 
     users.sort((a, b) => {
@@ -141,5 +150,32 @@ describe("redis service integration test", () => {
       expect(user.fcmToken).toBe(`token_${familyId}_${userId}`);
       expect(user.mktPushAgreed).toBe(Boolean(userId));
     });
+  });
+
+  it('hgetall 100개 Vs. pipeline Context Switching 테스트', async () => {
+    // given
+    const tgtFamilyIds = [];
+
+    for (let i = 0; i < 1000; i++) {
+      tgtFamilyIds.push(
+        ...[...Array(TEST_FAMILY_COUNT).keys()].map(
+          (x) => FAMILY_ID_BASE + x + 1,
+        ),
+      );
+    }
+
+    console.time('pipe-line');
+    const users = await redisFamilyMemberService.getFamilyMembersByIds(
+      tgtFamilyIds,
+    );
+    console.timeEnd('pipe-line');
+
+    console.time('no-pipeline');
+    const familyMembers = await Promise.all(
+      tgtFamilyIds.map((familyId) =>
+        redisFamilyMemberService.getFamily(familyId),
+      ),
+    );
+    console.timeEnd('no-pipeline');
   });
 });

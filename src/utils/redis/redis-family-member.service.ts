@@ -1,10 +1,10 @@
-import { Redis } from "ioredis";
-import { RedisFamilyMember } from "./redis-family-member.entity";
+import { Redis } from 'ioredis';
+import { RedisFamilyMember } from './redis-family-member.entity';
 import {
   FAMILY_ID_PREFIX,
   RedisUserInfoType,
   USER_ID_PREFIX,
-} from "./redis-family-member.type";
+} from './redis-family-member.type';
 
 export class RedisFamilyMemberService {
   private redis: Redis;
@@ -33,7 +33,7 @@ export class RedisFamilyMemberService {
         const { userName, fcmToken, mktPushAgreed }: RedisUserInfoType =
           JSON.parse(familyRaw[userIdKey]);
 
-        const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ""));
+        const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ''));
 
         const member = new RedisFamilyMember();
         member.familyId = familyId;
@@ -86,10 +86,9 @@ export class RedisFamilyMemberService {
    * pipeline을 통해 RTT 최적화 및 redis context switch overhead를 낮추어 성능 향상
    * @param familyIds 찾고자 하는 familyId(redis key)의 집합
    * @usecase messageToday
-   * TODO: 성능 비교 테스트
    */
   async getFamilyMembersByIds(
-    familyIds: number[]
+    familyIds: number[],
   ): Promise<RedisFamilyMember[]> {
     try {
       const usersFound: RedisFamilyMember[] = [];
@@ -104,8 +103,8 @@ export class RedisFamilyMemberService {
       const result = await pipeline.exec();
 
       if (pipeline.length !== familyIds.length) {
-        // c.f. ioredis-mock에서는 적용되지 않음
-        console.warn("Missed some request in pipeline.");
+        // AWARE: ioredis-mock에서는 적용되지 않음
+        console.warn('Missed some request in pipeline.');
       }
 
       result.forEach(([err, familyRaw], idx) => {
@@ -121,7 +120,7 @@ export class RedisFamilyMemberService {
           const { userName, fcmToken, mktPushAgreed }: RedisUserInfoType =
             JSON.parse(familyRaw[userIdKey]);
 
-          const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ""));
+          const userId = parseInt(userIdKey.replace(USER_ID_PREFIX, ''));
 
           const user = new RedisFamilyMember();
           user.familyId = familyId;

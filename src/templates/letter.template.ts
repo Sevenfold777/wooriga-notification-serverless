@@ -28,7 +28,7 @@ function letterSendTemplate(
 function timeCapsulesOpenReceiverTemplate(): TemplateReturnType {
   return {
     title: `우리가 편지`,
-    body: `기다리고 있던 타임캡슐이 열렸습니다!`,
+    body: `기다리고 있던 타임캡슐이 공개되었습니다!`,
   };
 }
 

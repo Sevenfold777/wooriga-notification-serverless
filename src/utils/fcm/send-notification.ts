@@ -16,8 +16,6 @@ export async function sendNotification({
       return true;
     }
 
-    console.log('called!!!', { tokens });
-
     const res = await FCM().sendEachForMulticast({
       tokens: tokensNotNull,
       notification: {
@@ -41,8 +39,6 @@ export async function sendNotification({
         },
       },
     });
-
-    console.log(res);
 
     return true;
   } catch (e) {
